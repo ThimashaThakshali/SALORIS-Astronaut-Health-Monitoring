@@ -1,0 +1,349 @@
+.body-layout {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 14px;
+  position: relative;
+}
+.body-canvas {
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(56, 132, 149, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 132, 149, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 50% 43%, #183b4b 0, transparent 45%), #0a1b29;
+  background-size:
+    32px 32px,
+    32px 32px,
+    auto,
+    auto;
+}
+.body-canvas:before {
+  content: "";
+  position: absolute;
+  inset: 13% 11%;
+  border: 1px solid #1c3a4d;
+  border-radius: 50%;
+}
+.view-toggle {
+  display: flex;
+  align-self: flex-start;
+  padding: 3px;
+  border: 1px solid #29465a;
+  border-radius: 7px;
+  background: #091a27;
+  z-index: 2;
+}
+.view-toggle button {
+  padding: 6px 13px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #6f889a;
+  font-size: 12px;
+}
+.view-toggle button.active {
+  background: #173748;
+  color: #cbf3ee;
+}
+.anatomy-map-wrap {
+  width: min(100%, 470px);
+  z-index: 1;
+}
+.anatomy-map {
+  display: block;
+  width: 100%;
+  height: 500px;
+  overflow: visible;
+  filter: drop-shadow(0 16px 25px rgba(0, 0, 0, 0.26));
+  animation: anatomyViewIn 0.35s ease both;
+}
+.body-outline {
+  fill: rgba(15, 43, 58, 0.88);
+  stroke: #628b9c;
+  stroke-width: 1.4;
+}
+.anatomy-contour,
+.face-detail,
+.back-contour {
+  fill: none;
+  stroke: #315c70;
+  stroke-width: 1.2;
+}
+.back-contour {
+  stroke-dasharray: 3 4;
+}
+.anatomy-region {
+  cursor: pointer;
+  outline: none;
+}
+.anatomy-region:focus-visible .organ,
+.anatomy-region:focus-visible .system-hit {
+  stroke: #fff;
+  stroke-width: 3;
+}
+.organ {
+  fill: #27616d;
+  stroke: #68c7bd;
+  stroke-width: 1.3;
+  transition:
+    fill 0.18s ease,
+    filter 0.18s ease;
+}
+.organ-detail {
+  fill: none;
+  stroke: #91e9dd;
+  stroke-width: 1;
+  pointer-events: none;
+}
+.eye {
+  fill: #70a7ff;
+}
+.pupil {
+  fill: #dff;
+  pointer-events: none;
+}
+.heart {
+  fill: #b54a59;
+  stroke: #ff8791;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.vessel {
+  fill: none;
+  stroke: #d45c67;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.vessel-secondary {
+  stroke: #487fb0;
+  stroke-width: 2.5;
+}
+.liver {
+  fill: #8b5351;
+  stroke: #d5857d;
+}
+.lung {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.skeletal-layer {
+  fill: none;
+  stroke: rgba(169, 203, 211, 0.4);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    stroke 0.25s ease,
+    opacity 0.25s ease;
+}
+.skeletal-layer ellipse {
+  fill: rgba(117, 159, 169, 0.08);
+}
+.skeletal-layer .pelvis {
+  fill: rgba(138, 180, 188, 0.1);
+}
+.muscle-anatomy {
+  fill: rgba(67, 127, 132, 0.19);
+  stroke: rgba(81, 158, 158, 0.38);
+  stroke-width: 1;
+  transition:
+    fill 0.25s ease,
+    stroke 0.25s ease;
+}
+.muscle-back {
+  fill: rgba(85, 114, 139, 0.22);
+}
+.skin-region {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 18;
+  pointer-events: stroke;
+}
+.system-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 24;
+}
+.anatomy-region:hover .organ,
+.anatomy-region.is-selected .organ {
+  fill: #2bd5c0;
+  filter: drop-shadow(0 0 7px rgba(43, 213, 192, 0.75));
+}
+.region-heart.is-selected .heart {
+  fill: #ca5361;
+  stroke: #6ff5e6;
+  stroke-width: 2;
+  animation: heartRhythm 1.8s ease-in-out infinite;
+}
+.region-lungs.is-selected .lung-left,
+.region-lungs.is-selected .lung-right {
+  fill: #37b9b2;
+  stroke: #8affef;
+  animation: lungBreath 4.6s ease-in-out infinite;
+}
+.region-blood.is-selected .vessel {
+  stroke-dasharray: 7 7;
+  animation: circulationFlow 1.4s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(49, 219, 198, 0.65));
+}
+.region-brain.is-selected .brain,
+.region-eyes.is-selected .eye {
+  animation: neuralGlow 2.4s ease-in-out infinite;
+}
+.region-bones.is-selected .skeletal-layer {
+  stroke: #d5f8f3;
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(112, 167, 255, 0.45));
+}
+.region-muscles.is-selected .muscle-anatomy {
+  fill: rgba(49, 219, 198, 0.42);
+  stroke: #75e8db;
+}
+.anatomy-region:hover .system-hit,
+.anatomy-region.is-selected .system-hit {
+  stroke: rgba(49, 219, 198, 0.45);
+  filter: drop-shadow(0 0 5px rgba(49, 219, 198, 0.65));
+}
+.anatomy-callout {
+  pointer-events: none;
+}
+.active-callout path {
+  fill: none;
+  stroke: #4b8993;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.active-callout circle {
+  fill: var(--cyan);
+  stroke: #d4fff9;
+  stroke-width: 1;
+}
+.active-callout text {
+  fill: #d7f5f0;
+  font: 700 9px "DM Sans", sans-serif;
+  paint-order: stroke;
+  stroke: #071824;
+  stroke-width: 4px;
+}
+.active-callout .callout-subtitle {
+  fill: #5f8d9c;
+  font: 700 6px "Space Mono", monospace;
+  letter-spacing: 0.08em;
+}
+.anatomy-attribution {
+  color: #668494;
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: center;
+}
+.body-canvas > p {
+  color: #607f91;
+  font-size: 12px;
+  z-index: 1;
+}
+.body-info {
+  padding: 28px;
+}
+.body-detail-content {
+  height: 100%;
+}
+.system-number {
+  float: right;
+  color: #4f7085;
+  font: 700 8px "Space Mono", monospace;
+}
+.body-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #0d303a;
+  color: var(--cyan);
+  margin-bottom: 19px;
+}
+.body-info h2 {
+  font-size: 30px;
+  margin: 5px 0 20px;
+}
+.function-summary {
+  padding: 0 0 15px;
+}
+.function-summary b {
+  color: #cbd9df;
+  font-size: 12px;
+}
+.function-summary p {
+  margin-top: 5px;
+  color: #91a6b3;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.info-block {
+  display: flex;
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid #4e4634;
+  border-radius: 8px;
+  background: #241f18;
+}
+.info-block svg {
+  color: var(--amber);
+  flex: none;
+}
+.info-block b,
+.detail-list b {
+  font-size: 12px;
+}
+.info-block p,
+.detail-list p {
+  color: #8da0ac;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: 4px;
+}
+.detail-list > div {
+  padding: 14px 0;
+  border-bottom: 1px solid #203848;
+}
+.education-note {
+  display: flex;
+  gap: 9px;
+  padding: 12px;
+  margin: 15px 0;
+  background: #0a252f;
+  border: 1px solid #1c4a55;
+  border-radius: 8px;
+}
+.education-note svg {
+  flex: none;
+  color: var(--cyan);
+}
+.education-note p {
+  color: #81a5aa;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.region-pills {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.region-pills button {
+  padding: 7px 10px;
+  border: 1px solid #284458;
+  border-radius: 20px;
+  background: #0c1d2b;
+  color: #708a9d;
+  font-size: 12px;
+}
+.region-pills button.active {
+  color: #09221e;
+  background: var(--cyan);
+  border-color: var(--cyan);
+}
