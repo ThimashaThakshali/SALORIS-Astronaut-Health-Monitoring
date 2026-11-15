@@ -1,0 +1,52 @@
+{
+  "input_file": "observations_submitted.csv",
+  "output_file": "baseline_comparisons.csv",
+  "input_rows": 8252,
+  "preflight_numeric_rows": 3411,
+  "postflight_rows": 4831,
+  "comparison_rows": 4831,
+  "subjects": [
+    "C001",
+    "C002",
+    "C003",
+    "C004"
+  ],
+  "panels": [
+    "CMP",
+    "cardiovascular",
+    "immune"
+  ],
+  "assays": [
+    "AlamarPanel",
+    "CMP",
+    "HD71",
+    "HDCVD9"
+  ],
+  "status_counts": {
+    "COMPARABLE": 4815,
+    "INSUFFICIENT_BASELINE": 4,
+    "MISSING_POST_VALUE": 12
+  },
+  "baseline_groups": 1206,
+  "method": {
+    "baseline_timepoints": [
+      "L-92",
+      "L-44",
+      "L-3"
+    ],
+    "postflight_timepoints": [
+      "R+1",
+      "R+45",
+      "R+82",
+      "R+194"
+    ],
+    "standard_deviation": "Sample standard deviation (n-1), only when at least two numeric baseline values exist.",
+    "percentage_difference": "absolute difference divided by absolute baseline mean, multiplied by 100; blank when baseline mean is zero."
+  },
+  "limitations": [
+    "OSD-575 represents four Inspiration4 subjects and is exploratory research data.",
+    "Comparisons are descriptive and are not clinical validation, diagnosis, prediction or generalisable astronaut-health accuracy.",
+    "No interpolation, imputation, cross-panel unit conversion or emergency decision logic is applied."
+  ],
+  "generated_at": "2026-11-15T16:50:37.755768+00:00"
+}
