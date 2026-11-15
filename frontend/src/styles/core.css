@@ -1362,3 +1362,34 @@ main {
   vertical-align: middle;
   margin-right: 6px;
 }
+
+/* Check-in selection buttons */
+.choice-row button,
+.scale button {
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.choice-row button:hover,
+.scale button:hover {
+  border-color: var(--cyan);
+  color: #e8fffb;
+}
+
+.choice-row button.active,
+.scale button.active {
+  border-color: var(--cyan);
+  background: #123d49;
+  color: #eafffb;
+  box-shadow: inset 0 0 0 1px var(--cyan);
+}
+
+.field-error {
+  display: block;
+  margin-top: 7px;
+  color: #ff8585;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+

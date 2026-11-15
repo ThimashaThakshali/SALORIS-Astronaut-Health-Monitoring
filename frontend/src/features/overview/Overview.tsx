@@ -1,4 +1,4 @@
-import {
+﻿import {
   Activity,
   ArrowRight,
   Bell,
@@ -16,11 +16,8 @@ import { PageHeader } from "../../components/common/PageHeader";
 import { ReadingCard } from "../../components/common/ReadingCard";
 import { TrendChart } from "../../components/common/TrendChart";
 
-import {
-  environmentReadings,
-  healthReadings,
-  radiationRecord,
-} from "../../data";
+import { environmentReadings, healthReadings, radiationRecord } from "../../data";
+import { getLatestHealthCheckIn } from "../../services/storage/localStorage";
 
 import type { Page } from "../../types/navigation";
 
@@ -30,6 +27,12 @@ interface OverviewProps {
 
 // Displays the main mission dashboard.
 export function Overview({ navigate }: OverviewProps) {
+  const latestCheckIn = getLatestHealthCheckIn();
+
+  const latestVitalsCount = latestCheckIn
+    ? Object.values(latestCheckIn.vitals).filter((value) => value !== null).length
+    : 0;
+
   // Count readings that need attention or are not current.
   const attentionCount = healthReadings.filter(
     (reading) => reading.status === "Attention",
@@ -42,7 +45,7 @@ export function Overview({ navigate }: OverviewProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Mission day 184 · Sol transit phase"
+        eyebrow="Mission day 184 Â· Sol transit phase"
         title="Good morning, Commander Chen."
         description="Review recorded measurements, data quality and pending actions for Ares Transit 01."
         action={
@@ -72,13 +75,13 @@ export function Overview({ navigate }: OverviewProps) {
           <div>
             <span className="eyebrow">Active crew profile</span>
             <h2>Commander Maya Chen</h2>
-            <p>Flight crew · Ares Transit 01</p>
+            <p>Flight crew Â· Ares Transit 01</p>
           </div>
 
           <div className="mission-duration">
             <small>Mission duration</small>
             <strong>184 days</strong>
-            <span>Transit phase · 61% complete</span>
+            <span>Transit phase Â· 61% complete</span>
           </div>
         </Panel>
 
@@ -142,7 +145,7 @@ export function Overview({ navigate }: OverviewProps) {
             <Zap size={17} />
 
             <div>
-              <small>Radiation exposure · {radiationRecord.period}</small>
+              <small>Radiation exposure Â· {radiationRecord.period}</small>
               <b>
                 {radiationRecord.dose} {radiationRecord.unit}
               </b>
@@ -153,7 +156,7 @@ export function Overview({ navigate }: OverviewProps) {
 
           <div className="source-line">
             <Radio size={13} />
-            Simulated environmental dataset · not a live sensor feed
+            Simulated environmental dataset Â· not a live sensor feed
           </div>
         </Panel>
 
@@ -161,31 +164,45 @@ export function Overview({ navigate }: OverviewProps) {
           <div className="panel-heading">
             <div>
               <span className="eyebrow">Recent check-in</span>
-              <h2>Morning assessment</h2>
+              <h2>{latestCheckIn ? "Latest saved assessment" : "No check-in yet"}</h2>
             </div>
 
             <span className="status status-normal">
-              <Check size={12} />
-              Recorded
+              {latestCheckIn ? (
+                <>
+                  <Check size={12} />
+                  Recorded
+                </>
+              ) : (
+                "Not recorded"
+              )}
             </span>
           </div>
 
-          <dl>
-            <div>
-              <dt>Recorded</dt>
-              <dd>Today · 08:42</dd>
-            </div>
-
-            <div>
-              <dt>Method</dt>
-              <dd>Demonstration record</dd>
-            </div>
-
-            <div>
-              <dt>Coverage</dt>
-              <dd>5 vitals · sleep · mood</dd>
-            </div>
-          </dl>
+          {latestCheckIn ? (
+            <dl>
+              <div>
+                <dt>Recorded</dt>
+                <dd>{new Date(latestCheckIn.recordedAt).toLocaleString()}</dd>
+              </div>
+              <div>
+                <dt>Method</dt>
+                <dd>{latestCheckIn.source}</dd>
+              </div>
+              <div>
+                <dt>Coverage</dt>
+                <dd>{latestVitalsCount} vital measurements</dd>
+              </div>
+              <div>
+                <dt>Data type</dt>
+                <dd>{latestCheckIn.simulated ? "Simulated" : "Entered measurement"}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="form-help">
+              No locally saved check-in is available. Record measurements to see your latest entry here.
+            </p>
+          )}
 
           <button
             className="secondary-btn wide"
@@ -230,7 +247,7 @@ export function Overview({ navigate }: OverviewProps) {
             <span>
               <i className="cyan-dot" /> Heart rate
             </span>
-            <span>Historical simulated series · bpm</span>
+            <span>Historical simulated series Â· bpm</span>
           </div>
         </Panel>
 
@@ -251,7 +268,7 @@ export function Overview({ navigate }: OverviewProps) {
                 Triggered by two simulated sleep entries below the crew's
                 planned duration.
               </p>
-              <small>Attention · latest source entry Today, 07:20</small>
+              <small>Attention Â· latest source entry Today, 07:20</small>
             </div>
           </div>
 
@@ -263,7 +280,7 @@ export function Overview({ navigate }: OverviewProps) {
                 No verified measurement source is connected. Record with an
                 approved instrument if requested.
               </p>
-              <small>Insufficient data · sample timestamp Today, 08:41</small>
+              <small>Insufficient data Â· sample timestamp Today, 08:41</small>
             </div>
           </div>
 
@@ -279,3 +296,4 @@ export function Overview({ navigate }: OverviewProps) {
     </>
   );
 }
+

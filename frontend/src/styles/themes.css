@@ -704,3 +704,18 @@ html[data-theme="light"] .week-grid .today i {
   color: #ffffff;
   background: #066b66;
 }
+
+/* Check-in selection buttons — light theme */
+html[data-theme="light"] .choice-row button:hover,
+html[data-theme="light"] .scale button:hover {
+  border-color: #168f82;
+  color: #145c57;
+}
+
+html[data-theme="light"] .choice-row button.active,
+html[data-theme="light"] .scale button.active {
+  border-color: #168f82;
+  background: #ccece6;
+  color: #145c57;
+  box-shadow: inset 0 0 0 1px #168f82;
+}
