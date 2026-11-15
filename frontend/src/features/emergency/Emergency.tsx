@@ -17,6 +17,7 @@ import {
   getEmergencyEvents,
   resolveEmergencyEvent,
   type EmergencyEvent,
+  type Astronaut,
 } from "../../services/api/client";
 
 // Demonstration-only emergency reference content.
@@ -52,7 +53,7 @@ type ActivationState = "idle" | "confirm" | "demo";
 type EventStatus = "idle" | "syncing" | "success" | "failure";
 
 // Displays emergency reference guidance and a local SOS demonstration.
-export function Emergency() {
+export function Emergency({ astronaut }: { astronaut: Astronaut | null }) {
   const [active, setActive] = useState(0);
   const [activation, setActivation] = useState<ActivationState>("idle");
   const [eventMessage, setEventMessage] = useState("");
@@ -61,6 +62,7 @@ export function Emergency() {
 
   useEffect(() => {
     let active = true;
+    if (!astronaut) return;
     void ensureAstronaut()
       .then((astronaut) => getEmergencyEvents(astronaut.id))
       .then((events) => {
@@ -79,7 +81,7 @@ export function Emergency() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [astronaut]);
 
   const createDemoEvent = async () => {
     setEventStatus("syncing");
@@ -87,7 +89,9 @@ export function Emergency() {
     setActivation("demo");
 
     try {
-      const astronaut = await ensureAstronaut();
+      if (!astronaut) {
+        throw new Error("No astronaut profile selected");
+      }
       const event = await createEmergencyEvent({
         astronautId: astronaut.id,
         description: `Demonstration SOS: ${emergencies[active][0]}`,
@@ -252,7 +256,7 @@ export function Emergency() {
 
               <div>
                 <dt>Location</dt>
-                <dd>Ares Transit 01 · crew habitat</dd>
+                <dd>{astronaut?.missionName ?? "Mission context not selected"} · crew habitat</dd>
               </div>
 
               <div>

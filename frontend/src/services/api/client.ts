@@ -93,6 +93,30 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
+
+}
+
+export function getAstronauts(): Promise<Astronaut[]> {
+  return request("/astronauts");
+}
+
+export function createAstronaut(payload: {
+  fullName: string;
+  callsign: string;
+  missionName: string;
+}): Promise<Astronaut> {
+  return request("/astronauts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getSelectedAstronautId(): string | null {
+  return localStorage.getItem(ASTRONAUT_STORAGE_KEY);
+}
+
+export function selectAstronaut(astronautId: string): void {
+  localStorage.setItem(ASTRONAUT_STORAGE_KEY, astronautId);
 }
 
 async function request<T>(
@@ -136,7 +160,7 @@ export async function ensureAstronaut(): Promise<Astronaut> {
 
   let astronauts: Astronaut[];
   try {
-    astronauts = await request<Astronaut[]>("/astronauts");
+    astronauts = await getAstronauts();
   } catch {
     throw new ApiError(
       "The SALORIS backend is unavailable. Local data was kept.",
@@ -144,28 +168,17 @@ export async function ensureAstronaut(): Promise<Astronaut> {
     );
   }
 
-  const existing = astronauts.find(
-    (astronaut) =>
-      astronaut.id === cachedId ||
-      (astronaut.fullName === "Maya Chen" &&
-        astronaut.callsign === "MC" &&
-        astronaut.missionName === "Ares Transit 01"),
-  );
+  const existing = astronauts.find((astronaut) => astronaut.id === cachedId);
   if (existing) {
     localStorage.setItem(ASTRONAUT_STORAGE_KEY, existing.id);
     return existing;
   }
 
-  const astronaut = await request<Astronaut>("/astronauts", {
-    method: "POST",
-    body: JSON.stringify({
-      fullName: "Maya Chen",
-      callsign: "MC",
-      missionName: "Ares Transit 01",
-    }),
-  });
-  localStorage.setItem(ASTRONAUT_STORAGE_KEY, astronaut.id);
-  return astronaut;
+  localStorage.removeItem(ASTRONAUT_STORAGE_KEY);
+  throw new ApiError(
+    "Select or create an astronaut profile before using SALORIS.",
+    400,
+  );
 }
 
 export function createHealthReading(

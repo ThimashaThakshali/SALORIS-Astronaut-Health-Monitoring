@@ -3,6 +3,7 @@ import { ChevronDown, CloudOff, MoreHorizontal, Radio, X } from "lucide-react";
 import { SalorisMark } from "../common/SalorisMark";
 import type { Page } from "../../types/navigation";
 import { nav } from "../../app/navigation";
+import type { Astronaut } from "../../services/api/client";
 
 interface SidebarProps {
   page: Page;
@@ -11,6 +12,8 @@ interface SidebarProps {
   navigate: (page: Page) => void;
   closeMenu: () => void;
   toggleOffline: () => void;
+  astronaut: Astronaut | null;
+  openProfile: () => void;
 }
 
 // Displays the SALORIS sidebar and main navigation.
@@ -21,6 +24,8 @@ export function Sidebar({
   navigate,
   closeMenu,
   toggleOffline,
+  astronaut,
+  openProfile,
 }: SidebarProps) {
   return (
     <>
@@ -44,7 +49,7 @@ export function Sidebar({
 
         <div className="mission-id">
           <span>ACTIVE MISSION</span>
-          <b>ARES / TRANSIT 01</b>
+          <b>{astronaut?.missionName ?? "NO MISSION SELECTED"}</b>
 
           <small>
             <i /> Mission day 184
@@ -78,16 +83,16 @@ export function Sidebar({
             <MoreHorizontal />
           </button>
 
-          <div className="profile">
-            <span>MC</span>
+          <button className="profile" onClick={openProfile}>
+            <span>{astronaut?.callsign ?? "?"}</span>
 
             <div>
-              <b>Maya Chen</b>
-              <small>Mission commander</small>
+              <b>{astronaut?.fullName ?? "Select astronaut profile"}</b>
+              <small>{astronaut ? astronaut.missionName : "Profile setup"}</small>
             </div>
 
             <ChevronDown size={15} />
-          </div>
+          </button>
         </div>
       </aside>
 

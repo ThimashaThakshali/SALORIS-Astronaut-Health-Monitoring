@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { Page } from "../../types/navigation";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import type { Astronaut } from "../../services/api/client";
 
 interface AppLayoutProps {
   page: Page;
@@ -16,6 +17,8 @@ interface AppLayoutProps {
   toggleOffline: () => void;
   toggleTheme: () => void;
   children: ReactNode;
+  astronaut: Astronaut | null;
+  openProfile: () => void;
 }
 
 // Combines the sidebar, topbar, page content and footer.
@@ -30,6 +33,8 @@ export function AppLayout({
   toggleOffline,
   toggleTheme,
   children,
+  astronaut,
+  openProfile,
 }: AppLayoutProps) {
   return (
     <div
@@ -43,6 +48,8 @@ export function AppLayout({
         navigate={navigate}
         closeMenu={closeMenu}
         toggleOffline={toggleOffline}
+        astronaut={astronaut}
+        openProfile={openProfile}
       />
 
       <div className="main-column">

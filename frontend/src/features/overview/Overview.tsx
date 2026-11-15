@@ -38,6 +38,7 @@ import type { Page } from "../../types/navigation";
 
 interface OverviewProps {
   navigate: (page: Page) => void;
+  astronaut: Astronaut;
 }
 
 type AlertLoadState = "loading" | "loaded" | "unavailable";
@@ -53,8 +54,7 @@ function mapCollectionMethod(method: string): ReadingMethod {
 }
 
 // Displays the main mission dashboard.
-export function Overview({ navigate }: OverviewProps) {
-  const [astronaut, setAstronaut] = useState<Astronaut | null>(null);
+export function Overview({ navigate, astronaut }: OverviewProps) {
   const [backendAlerts, setBackendAlerts] = useState<HealthAlert[]>([]);
   const [backendReadings, setBackendReadings] = useState<HealthReadingRecord[]>(
     [],
@@ -76,7 +76,6 @@ export function Overview({ navigate }: OverviewProps) {
 
       if (!active) return;
 
-      setAstronaut(astronaut);
       const [alertsResult, readingsResult] = results;
       if (alertsResult.status === "fulfilled") {
         setBackendAlerts(alertsResult.value);
@@ -154,11 +153,7 @@ export function Overview({ navigate }: OverviewProps) {
     <>
       <PageHeader
         eyebrow="Mission day 184 Â· Sol transit phase"
-        title={
-          astronaut
-            ? `Good morning, ${astronaut.callsign}.`
-            : "Mission overview"
-        }
+        title={`Good morning, ${astronaut.callsign}.`}
         description="Review recorded measurements, data quality and pending actions for Ares Transit 01."
         action={
           <button
@@ -182,17 +177,15 @@ export function Overview({ navigate }: OverviewProps) {
 
       <div className="mission-summary">
         <Panel className="astronaut-summary">
-          <div className="profile-avatar">{astronaut?.callsign ?? "—"}</div>
+          <div className="profile-avatar">          {astronaut.callsign}</div>
 
           <div>
             <span className="eyebrow">Active crew profile</span>
           <h2>
-            {astronaut?.fullName ?? "Backend crew profile unavailable"}
+            {astronaut.fullName}
           </h2>
           <p>
-            {astronaut
-              ? `Flight crew · ${astronaut.missionName}`
-              : "Connect to the backend to load mission identity"}
+            {`Flight crew · ${astronaut.missionName}`}
           </p>
           </div>
 
