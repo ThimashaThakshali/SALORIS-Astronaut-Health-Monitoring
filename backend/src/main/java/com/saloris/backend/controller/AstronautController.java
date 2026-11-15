@@ -5,6 +5,7 @@ import com.saloris.backend.repository.AstronautRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
@@ -33,12 +34,25 @@ public class AstronautController {
                     HttpStatus.BAD_REQUEST,
                     "Full name, callsign and mission name are required");
         }
+        if (astronaut.getFullName().length() > 150
+                || astronaut.getCallsign().length() > 80
+                || astronaut.getMissionName().length() > 150) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Profile fields exceed the allowed length");
+        }
 
         astronaut.setFullName(astronaut.getFullName().trim());
         astronaut.setCallsign(astronaut.getCallsign().trim());
         astronaut.setMissionName(astronaut.getMissionName().trim());
 
-        return astronautRepository.save(astronaut);
+        try {
+            return astronautRepository.save(astronaut);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "That callsign is already in use");
+        }
     }
 
     @GetMapping

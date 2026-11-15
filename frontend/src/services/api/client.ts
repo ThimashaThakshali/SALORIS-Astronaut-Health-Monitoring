@@ -93,7 +93,20 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
+}
 
+function getApiErrorMessage(body: string, status: number): string {
+  if (!body) return `SALORIS backend request failed (${status}).`;
+  try {
+    const parsed = JSON.parse(body) as {
+      detail?: string;
+      message?: string;
+      error?: string;
+    };
+    return parsed.detail ?? parsed.message ?? parsed.error ?? body;
+  } catch {
+    return body;
+  }
 }
 
 export function getAstronauts(): Promise<Astronaut[]> {
@@ -142,10 +155,7 @@ async function request<T>(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new ApiError(
-      body || `SALORIS backend request failed (${response.status}).`,
-      response.status,
-    );
+    throw new ApiError(getApiErrorMessage(body, response.status), response.status);
   }
 
   if (response.status === 204) {
@@ -161,7 +171,8 @@ export async function ensureAstronaut(): Promise<Astronaut> {
   let astronauts: Astronaut[];
   try {
     astronauts = await getAstronauts();
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
     throw new ApiError(
       "The SALORIS backend is unavailable. Local data was kept.",
       0,

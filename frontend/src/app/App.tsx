@@ -9,6 +9,7 @@ import {
   getAstronauts,
   getSelectedAstronautId,
   selectAstronaut,
+  ApiError,
   type Astronaut,
 } from "../services/api/client";
 
@@ -73,8 +74,15 @@ export default function App() {
         );
         setAstronaut(selected ?? null);
       })
-      .catch(() => {
-        if (active) setProfileError("Astronaut profiles could not be loaded.");
+      .catch((error) => {
+        if (!active) return;
+        setProfileError(
+          error instanceof ApiError && error.status === 0
+            ? "Astronaut profiles could not be loaded because the SALORIS backend is unavailable."
+            : error instanceof Error
+              ? `Astronaut profiles could not be loaded: ${error.message}`
+              : "Astronaut profiles could not be loaded.",
+        );
       })
       .finally(() => {
         if (active) setProfileLoading(false);
@@ -237,8 +245,14 @@ function ProfileSetup({
         missionName: missionName.trim(),
       });
       onCreated(record);
-    } catch {
-      setFormError("The profile could not be saved. Check the backend connection.");
+    } catch (error) {
+      setFormError(
+        error instanceof ApiError && error.status === 0
+          ? "The SALORIS backend is unavailable. Start it and try again."
+          : error instanceof Error
+            ? `The profile could not be saved: ${error.message}`
+            : "The profile could not be saved.",
+      );
     } finally {
       setSaving(false);
     }

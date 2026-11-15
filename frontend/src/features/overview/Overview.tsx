@@ -152,7 +152,7 @@ export function Overview({ navigate, astronaut }: OverviewProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Mission day 184 Â· Sol transit phase"
+        eyebrow="Mission day 184 · Sol transit phase"
         title={`Good morning, ${astronaut.callsign}.`}
         description="Review recorded measurements, data quality and pending actions for Ares Transit 01."
         action={
@@ -177,22 +177,18 @@ export function Overview({ navigate, astronaut }: OverviewProps) {
 
       <div className="mission-summary">
         <Panel className="astronaut-summary">
-          <div className="profile-avatar">          {astronaut.callsign}</div>
+          <div className="profile-avatar">{astronaut.callsign}</div>
 
-          <div>
+          <div className="astronaut-profile-details">
             <span className="eyebrow">Active crew profile</span>
-          <h2>
-            {astronaut.fullName}
-          </h2>
-          <p>
-            {`Flight crew · ${astronaut.missionName}`}
-          </p>
+            <h2>{astronaut.fullName}</h2>
+            <p>{`Flight crew · ${astronaut.missionName}`}</p>
           </div>
 
           <div className="mission-duration">
             <small>Mission duration</small>
             <strong>184 days</strong>
-            <span>Transit phase Â· 61% complete</span>
+            <span>Transit phase · 61% complete</span>
           </div>
         </Panel>
 
@@ -256,7 +252,7 @@ export function Overview({ navigate, astronaut }: OverviewProps) {
             <Zap size={17} />
 
             <div>
-              <small>Radiation exposure Â· {radiationRecord.period}</small>
+              <small>Radiation exposure · {radiationRecord.period}</small>
               <b>
                 {radiationRecord.dose} {radiationRecord.unit}
               </b>
@@ -267,7 +263,7 @@ export function Overview({ navigate, astronaut }: OverviewProps) {
 
           <div className="source-line">
             <Radio size={13} />
-            Simulated environmental dataset Â· not a live sensor feed
+            Simulated environmental dataset · not a live sensor feed
           </div>
         </Panel>
 
@@ -401,7 +397,7 @@ export function Overview({ navigate, astronaut }: OverviewProps) {
             <span>
               <i className="cyan-dot" /> Heart rate
             </span>
-            <span>Historical simulated series Â· bpm</span>
+            <span>Historical simulated series · bpm</span>
           </div>
         </Panel>
 
