@@ -10,6 +10,10 @@ import {
 
 import { PageHeader } from "../../components/common/PageHeader";
 import { Panel } from "../../components/common/Panel";
+import {
+  createEmergencyEvent,
+  ensureAstronaut,
+} from "../../services/api/client";
 
 // Demonstration-only emergency reference content.
 // Operational procedures must be approved by mission medical leadership.
@@ -46,6 +50,26 @@ type ActivationState = "idle" | "confirm" | "demo";
 export function Emergency() {
   const [active, setActive] = useState(0);
   const [activation, setActivation] = useState<ActivationState>("idle");
+  const [eventMessage, setEventMessage] = useState("");
+
+  const createDemoEvent = async () => {
+    setEventMessage("");
+    setActivation("demo");
+
+    try {
+      const astronaut = await ensureAstronaut();
+      await createEmergencyEvent({
+        astronautId: astronaut.id,
+        description: `Demonstration SOS: ${emergencies[active][0]}`,
+        idempotencyKey: `demo-sos:${Date.now()}`,
+      });
+      setEventMessage("The demonstration event was synchronized with the backend.");
+    } catch {
+      setEventMessage(
+        "The demonstration event remains local because the backend is unavailable.",
+      );
+    }
+  };
 
   return (
     <>
@@ -224,7 +248,7 @@ export function Emergency() {
 
               <button
                 className="danger-btn"
-                onClick={() => setActivation("demo")}
+                onClick={createDemoEvent}
               >
                 Confirm demo event
               </button>
@@ -238,10 +262,10 @@ export function Emergency() {
           <Info size={17} />
 
           <div>
-            <b>Demonstration event created locally</b>
+            <b>Demonstration event created</b>
             <p>
               No signal was transmitted. Follow authorised mission protocol for
-              a real emergency.
+              a real emergency. {eventMessage}
             </p>
           </div>
 

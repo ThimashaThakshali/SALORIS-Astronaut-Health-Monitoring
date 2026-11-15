@@ -1,4 +1,5 @@
-﻿import {
+import { useEffect, useState } from "react";
+import {
   Activity,
   ArrowRight,
   Bell,
@@ -18,6 +19,12 @@ import { TrendChart } from "../../components/common/TrendChart";
 
 import { environmentReadings, healthReadings, radiationRecord } from "../../data";
 import { getLatestHealthCheckIn } from "../../services/storage/localStorage";
+import {
+  acknowledgeAlert,
+  ensureAstronaut,
+  getAlerts,
+  type HealthAlert,
+} from "../../services/api/client";
 
 import type { Page } from "../../types/navigation";
 
@@ -27,7 +34,37 @@ interface OverviewProps {
 
 // Displays the main mission dashboard.
 export function Overview({ navigate }: OverviewProps) {
+  const [backendAlerts, setBackendAlerts] = useState<HealthAlert[]>([]);
   const latestCheckIn = getLatestHealthCheckIn();
+
+  useEffect(() => {
+    let active = true;
+    void ensureAstronaut()
+      .then((astronaut) => getAlerts(astronaut.id))
+      .then((alerts) => {
+        if (active) setBackendAlerts(alerts);
+      })
+      .catch(() => {
+        if (active) setBackendAlerts([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleAcknowledge = async (alertId: string) => {
+    try {
+      await acknowledgeAlert(alertId);
+      setBackendAlerts((alerts) =>
+        alerts.map((alert) =>
+          alert.id === alertId ? { ...alert, acknowledged: true } : alert,
+        ),
+      );
+    } catch {
+      // The static dashboard remains available when acknowledgement fails.
+    }
+  };
 
   const latestVitalsCount = latestCheckIn
     ? Object.values(latestCheckIn.vitals).filter((value) => value !== null).length
@@ -260,29 +297,60 @@ export function Overview({ navigate }: OverviewProps) {
             <Bell size={19} />
           </div>
 
-          <div className="alert-item warning">
-            <Moon />
-            <div>
-              <b>Sleep consistency</b>
-              <p>
-                Triggered by two simulated sleep entries below the crew's
-                planned duration.
-              </p>
-              <small>Attention Â· latest source entry Today, 07:20</small>
-            </div>
-          </div>
+          {backendAlerts.length > 0
+            ? backendAlerts.map((alert) => (
+                <div
+                  className={`alert-item ${
+                    alert.severity.toLowerCase() === "warning" ? "warning" : ""
+                  }`}
+                  key={alert.id}
+                >
+                  <Bell />
+                  <div>
+                    <b>{alert.severity}</b>
+                    <p>{alert.message}</p>
+                    <small>
+                      {alert.acknowledged ? "Acknowledged" : "Needs acknowledgement"}
+                    </small>
+                    {!alert.acknowledged && (
+                      <button
+                        type="button"
+                        className="secondary-btn"
+                        onClick={() => void handleAcknowledge(alert.id)}
+                      >
+                        Acknowledge
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            : (
+                <>
+                  <div className="alert-item warning">
+                    <Moon />
+                    <div>
+                      <b>Sleep consistency</b>
+                      <p>
+                        Triggered by two simulated sleep entries below the crew's
+                        planned duration.
+                      </p>
+                      <small>Attention Â· latest source entry Today, 07:20</small>
+                    </div>
+                  </div>
 
-          <div className="alert-item">
-            <Check />
-            <div>
-              <b>Oxygen saturation is outdated</b>
-              <p>
-                No verified measurement source is connected. Record with an
-                approved instrument if requested.
-              </p>
-              <small>Insufficient data Â· sample timestamp Today, 08:41</small>
-            </div>
-          </div>
+                  <div className="alert-item">
+                    <Check />
+                    <div>
+                      <b>Oxygen saturation is outdated</b>
+                      <p>
+                        No verified measurement source is connected. Record with an
+                        approved instrument if requested.
+                      </p>
+                      <small>Insufficient data Â· sample timestamp Today, 08:41</small>
+                    </div>
+                  </div>
+                </>
+              )}
 
           <button
             className="secondary-btn wide"
@@ -296,4 +364,3 @@ export function Overview({ navigate }: OverviewProps) {
     </>
   );
 }
-
