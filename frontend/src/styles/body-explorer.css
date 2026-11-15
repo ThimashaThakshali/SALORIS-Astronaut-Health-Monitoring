@@ -1,349 +1,1016 @@
+/* ==========================================================================
+   SALORIS – Body Explorer
+   Theme tokens are scoped to .body-layout. Dark is the default.
+   LIGHT MODE SELECTORS: if your app signals light mode differently from
+   the selectors listed in the "Light theme" block below, add yours there.
+   ========================================================================== */
+
 .body-layout {
+  /* ---- Dark theme (default) ---- */
+  --be-canvas-bg: #07141f;
+  --be-canvas-glow: rgba(23, 70, 90, 0.85);
+  --be-grid: rgba(56, 132, 149, 0.05);
+  --be-text: #e3f2f1;
+  --be-text-2: #9bb2bf;
+  --be-text-3: #6d8a9b;
+  --be-line: #203848;
+
+  --be-accent: #2bd5c0;
+  --be-accent-text: #5ff2dd;
+  --be-glow: rgba(43, 213, 192, 0.7);
+  --be-select-band: rgba(43, 213, 192, 0.32);
+
+  --be-frame: rgba(110, 210, 225, 0.3);
+  --be-frame-2: rgba(110, 210, 225, 0.12);
+  --be-glow-a: rgba(60, 170, 200, 0.16);
+  --be-glow-b: rgba(60, 170, 200, 0);
+  --be-beam-a: rgba(56, 227, 255, 0.16);
+  --be-beam-b: rgba(56, 227, 255, 0);
+  --be-ring: rgba(56, 227, 255, 0.55);
+
+  --be-body-a: rgba(95, 233, 255, 0.2);
+  --be-body-b: rgba(20, 110, 190, 0.08);
+  --be-body-stroke: rgba(130, 230, 245, 0.7);
+  --be-scan: rgba(127, 246, 255, 0.14);
+
+  --be-muscle: rgba(210, 100, 100, 0.2);
+  --be-muscle-s: rgba(240, 150, 140, 0.36);
+  --be-muscle-sel: rgba(43, 213, 192, 0.28);
+  --be-bone: rgba(225, 238, 242, 0.1);
+  --be-bone-s: rgba(222, 238, 244, 0.7);
+
+  --be-lung: rgba(236, 142, 152, 0.34);
+  --be-lung-s: rgba(255, 176, 186, 0.85);
+  --be-trachea: rgba(170, 215, 235, 0.45);
+  --be-trachea-s: rgba(200, 235, 250, 0.8);
+  --be-heart: #cc3f55;
+  --be-heart-s: #ff9aa5;
+  --be-liver: rgba(170, 88, 66, 0.78);
+  --be-liver-s: #e8a081;
+  --be-stomach: rgba(232, 140, 112, 0.66);
+  --be-stomach-s: #ffc0a8;
+  --be-gut: #f0a18c;
+  --be-gut-l: #d9806f;
+  --be-kidney: rgba(186, 70, 86, 0.82);
+  --be-kidney-s: #ff9fab;
+  --be-bladder: rgba(238, 176, 130, 0.62);
+  --be-bladder-s: #ffd2ae;
+  --be-brain: rgba(240, 164, 160, 0.62);
+  --be-brain-s: #ffd0c6;
+  --be-ear: rgba(140, 220, 250, 0.35);
+  --be-ear-s: #a6ecff;
+  --be-eye: #dff7ff;
+  --be-eye-s: #86dcff;
+  --be-iris: #0b4a6a;
+  --be-artery: #ff6577;
+  --be-vein: #5aa9ff;
+  --be-cord: #ffd98a;
+  --be-detail: rgba(255, 236, 220, 0.55);
+
+  --be-chip-bg: rgba(8, 24, 38, 0.82);
+  --be-chip-line: rgba(95, 242, 221, 0.45);
+  --be-leader: rgba(95, 242, 221, 0.55);
+  --be-dot-ring: #d4fff9;
+
+  --be-warn-bg: #241f18;
+  --be-warn-line: #4e4634;
+  --be-warn: #f2b45a;
+  --be-note-bg: #0a252f;
+  --be-note-line: #1c4a55;
+  --be-pill-bg: #0c1d2b;
+  --be-pill-line: #284458;
+  --be-pill-text: #8aa3b5;
+  --be-pill-active-text: #09221e;
+  --be-toggle-bg: #091a27;
+  --be-toggle-line: #29465a;
+  --be-toggle-active: #173748;
+  --be-toggle-active-text: #cbf3ee;
+  --be-toggle-text: #6f889a;
+
   display: grid;
   grid-template-columns: 0.82fr 1.18fr;
   gap: 14px;
   position: relative;
 }
+
+/* ---- Light theme ---- */
+:root[data-theme="light"] .body-layout,
+[data-theme="light"] .body-layout,
+html.light .body-layout,
+.light .body-layout,
+.theme-light .body-layout {
+  --be-canvas-bg: #f1f7fa;
+  --be-canvas-glow: rgba(190, 228, 240, 0.9);
+  --be-grid: rgba(40, 120, 145, 0.07);
+  --be-text: #0f3340;
+  --be-text-2: #476978;
+  --be-text-3: #5f7f8d;
+  --be-line: #d3e2e8;
+
+  --be-accent: #0e9f8f;
+  --be-accent-text: #0b7a6e;
+  --be-glow: rgba(14, 159, 143, 0.55);
+  --be-select-band: rgba(14, 159, 143, 0.3);
+
+  --be-frame: rgba(40, 120, 145, 0.3);
+  --be-frame-2: rgba(40, 120, 145, 0.12);
+  --be-glow-a: rgba(255, 255, 255, 0.85);
+  --be-glow-b: rgba(255, 255, 255, 0);
+  --be-beam-a: rgba(80, 180, 210, 0.2);
+  --be-beam-b: rgba(80, 180, 210, 0);
+  --be-ring: rgba(30, 130, 160, 0.5);
+
+  --be-body-a: rgba(130, 205, 228, 0.34);
+  --be-body-b: rgba(120, 180, 215, 0.12);
+  --be-body-stroke: rgba(35, 125, 155, 0.7);
+  --be-scan: rgba(60, 170, 200, 0.14);
+
+  --be-muscle: rgba(196, 92, 92, 0.24);
+  --be-muscle-s: rgba(160, 64, 64, 0.42);
+  --be-muscle-sel: rgba(14, 159, 143, 0.3);
+  --be-bone: rgba(244, 236, 214, 0.85);
+  --be-bone-s: #b3a07a;
+
+  --be-lung: rgba(238, 156, 166, 0.55);
+  --be-lung-s: #c46a78;
+  --be-trachea: rgba(176, 208, 224, 0.85);
+  --be-trachea-s: #6f9bb2;
+  --be-heart: #c23a4f;
+  --be-heart-s: #8e2236;
+  --be-liver: rgba(158, 84, 64, 0.88);
+  --be-liver-s: #6f3526;
+  --be-stomach: rgba(228, 150, 128, 0.85);
+  --be-stomach-s: #b4604e;
+  --be-gut: #e59a86;
+  --be-gut-l: #cf7e6c;
+  --be-kidney: rgba(168, 64, 79, 0.9);
+  --be-kidney-s: #7a2634;
+  --be-bladder: rgba(232, 176, 140, 0.9);
+  --be-bladder-s: #b97c58;
+  --be-brain: rgba(236, 170, 166, 0.9);
+  --be-brain-s: #b4726c;
+  --be-ear: rgba(240, 200, 190, 0.95);
+  --be-ear-s: #c08a80;
+  --be-eye: #ffffff;
+  --be-eye-s: #4f86a8;
+  --be-iris: #1d5878;
+  --be-artery: #c8283c;
+  --be-vein: #2f67b8;
+  --be-cord: #d9a23c;
+  --be-detail: rgba(120, 50, 50, 0.45);
+
+  --be-chip-bg: rgba(255, 255, 255, 0.92);
+  --be-chip-line: rgba(14, 159, 143, 0.5);
+  --be-leader: rgba(14, 140, 128, 0.6);
+  --be-dot-ring: #ffffff;
+
+  --be-warn-bg: #fff6e6;
+  --be-warn-line: #f0d9a8;
+  --be-warn: #b36b00;
+  --be-note-bg: #e8f6f6;
+  --be-note-line: #bfe1e3;
+  --be-pill-bg: #ffffff;
+  --be-pill-line: #cfdfe6;
+  --be-pill-text: #4d6f7d;
+  --be-pill-active-text: #ffffff;
+  --be-toggle-bg: #e4eff4;
+  --be-toggle-line: #cbdde5;
+  --be-toggle-active: #ffffff;
+  --be-toggle-active-text: #0b5f56;
+  --be-toggle-text: #55778a;
+}
+
+/* ==========================================================================
+   Canvas
+   ========================================================================== */
+
 .body-canvas {
-  min-height: 600px;
+  min-height: 0;
+  padding: 14px 16px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 8px;
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(rgba(56, 132, 149, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 132, 149, 0.04) 1px, transparent 1px),
-    radial-gradient(circle at 50% 43%, #183b4b 0, transparent 45%), #0a1b29;
+    linear-gradient(var(--be-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--be-grid) 1px, transparent 1px),
+    radial-gradient(circle at 50% 46%, var(--be-canvas-glow) 0, transparent 58%),
+    var(--be-canvas-bg);
   background-size:
     32px 32px,
     32px 32px,
     auto,
     auto;
 }
-.body-canvas:before {
-  content: "";
-  position: absolute;
-  inset: 13% 11%;
-  border: 1px solid #1c3a4d;
-  border-radius: 50%;
-}
-.view-toggle {
+
+.canvas-toolbar {
   display: flex;
-  align-self: flex-start;
-  padding: 3px;
-  border: 1px solid #29465a;
-  border-radius: 7px;
-  background: #091a27;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
   z-index: 2;
 }
+
+.view-toggle {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--be-toggle-line);
+  border-radius: 8px;
+  background: var(--be-toggle-bg);
+}
+
 .view-toggle button {
-  padding: 6px 13px;
+  padding: 6px 14px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: transparent;
-  color: #6f889a;
+  color: var(--be-toggle-text);
   font-size: 12px;
+  cursor: pointer;
 }
+
 .view-toggle button.active {
-  background: #173748;
-  color: #cbf3ee;
+  background: var(--be-toggle-active);
+  color: var(--be-toggle-active-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
+
+.canvas-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--be-text-3);
+  font-size: 11.5px;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.canvas-hint svg {
+  flex: none;
+}
+
+/* ==========================================================================
+   Responsive stage: figure, oval and callouts share one aspect-ratio box
+   ========================================================================== */
+
 .anatomy-map-wrap {
-  width: min(100%, 470px);
+  position: relative;
+  width: min(100%, 560px, calc(78vh * 0.8966));
+  aspect-ratio: 520 / 580;
+  container-type: inline-size;
+  container-name: anatomy;
   z-index: 1;
 }
+
 .anatomy-map {
   display: block;
   width: 100%;
-  height: 500px;
-  overflow: visible;
-  filter: drop-shadow(0 16px 25px rgba(0, 0, 0, 0.26));
-  animation: anatomyViewIn 0.35s ease both;
+  height: 100%;
+  overflow: hidden;
 }
-.body-outline {
-  fill: rgba(15, 43, 58, 0.88);
-  stroke: #628b9c;
-  stroke-width: 1.4;
+
+/* ---------- Stage ---------- */
+.holo-glow {
+  pointer-events: none;
 }
-.anatomy-contour,
-.face-detail,
-.back-contour {
+
+.holo-frame {
   fill: none;
-  stroke: #315c70;
+  stroke: var(--be-frame);
   stroke-width: 1.2;
 }
-.back-contour {
-  stroke-dasharray: 3 4;
+
+.holo-frame-inner {
+  fill: none;
+  stroke: var(--be-frame-2);
+  stroke-width: 1;
+  stroke-dasharray: 2 7;
 }
+
+.holo-beam {
+  pointer-events: none;
+}
+
+.holo-ring {
+  fill: none;
+  stroke: var(--be-ring);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.ring-1 {
+  opacity: 0.4;
+}
+
+.ring-2 {
+  opacity: 0.6;
+  stroke-dasharray: 8 6;
+}
+
+.ring-3 {
+  opacity: 0.9;
+}
+
+/* Gradient stops (theme-aware through CSS variables) */
+.stop-a {
+  stop-color: var(--be-body-a);
+}
+
+.stop-b {
+  stop-color: var(--be-body-b);
+}
+
+.beam-a {
+  stop-color: var(--be-beam-a);
+}
+
+.beam-b {
+  stop-color: var(--be-beam-b);
+}
+
+.glow-a {
+  stop-color: var(--be-glow-a);
+}
+
+.glow-b {
+  stop-color: var(--be-glow-b);
+}
+
+/* ---------- Body shell ---------- */
+.body-fill {
+  pointer-events: none;
+}
+
+.body-outline {
+  fill: none;
+  stroke: var(--be-body-stroke);
+  stroke-width: 1.3;
+  pointer-events: none;
+}
+
+.body-contour {
+  fill: none;
+  stroke: var(--be-body-stroke);
+  stroke-width: 0.8;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.scan-band {
+  fill: var(--be-scan);
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ==========================================================================
+   Regions
+   ========================================================================== */
+
 .anatomy-region {
   cursor: pointer;
   outline: none;
 }
-.anatomy-region:focus-visible .organ,
-.anatomy-region:focus-visible .system-hit {
-  stroke: #fff;
-  stroke-width: 3;
+
+.anatomy-region:focus-visible {
+  filter: drop-shadow(0 0 2px var(--be-accent)) drop-shadow(0 0 3px var(--be-accent));
 }
+
+/* Back view: show what is near the back clearly, fade the rest */
+.anatomy-map.is-back .organ-layer>.anatomy-region {
+  transition: opacity 0.2s ease;
+}
+
+.anatomy-map.is-back .organ-layer>.region-heart {
+  opacity: 0.28;
+}
+
+.anatomy-map.is-back .organ-layer>.region-digestive-system {
+  opacity: 0.4;
+}
+
+.anatomy-map.is-back .organ-layer>.region-eyes {
+  opacity: 0.22;
+}
+
+.anatomy-map.is-back .organ-layer>.region-lungs,
+.anatomy-map.is-back .organ-layer>.region-blood {
+  opacity: 0.85;
+}
+
+.anatomy-map.is-front .organ-layer>.region-kidneys-urinary-system {
+  opacity: 0.82;
+}
+
+.anatomy-map.is-back .organ-layer>.anatomy-region:hover,
+.anatomy-map.is-back .organ-layer>.anatomy-region.is-selected {
+  opacity: 1;
+}
+
+/* ---------- Organs ---------- */
 .organ {
-  fill: #27616d;
-  stroke: #68c7bd;
-  stroke-width: 1.3;
-  transition:
-    fill 0.18s ease,
-    filter 0.18s ease;
-}
-.organ-detail {
-  fill: none;
-  stroke: #91e9dd;
+  fill: var(--of, var(--be-lung));
+  stroke: var(--os, var(--be-lung-s));
   stroke-width: 1;
-  pointer-events: none;
+  stroke-linejoin: round;
+  transition: stroke 0.18s ease, filter 0.18s ease;
 }
-.eye {
-  fill: #70a7ff;
-}
-.pupil {
-  fill: #dff;
-  pointer-events: none;
-}
-.heart {
-  fill: #b54a59;
-  stroke: #ff8791;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.vessel {
+
+.organ-detail,
+.organ-line {
   fill: none;
-  stroke: #d45c67;
-  stroke-width: 4;
+  stroke: var(--be-detail);
+  stroke-width: 0.8;
   stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
-.vessel-secondary {
-  stroke: #487fb0;
-  stroke-width: 2.5;
-}
-.liver {
-  fill: #8b5351;
-  stroke: #d5857d;
-}
+
 .lung {
+  --of: var(--be-lung);
+  --os: var(--be-lung-s);
   transform-box: fill-box;
   transform-origin: center bottom;
 }
-.skeletal-layer {
-  fill: none;
-  stroke: rgba(169, 203, 211, 0.4);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition:
-    stroke 0.25s ease,
-    opacity 0.25s ease;
+
+.trachea {
+  --of: var(--be-trachea);
+  --os: var(--be-trachea-s);
 }
-.skeletal-layer ellipse {
-  fill: rgba(117, 159, 169, 0.08);
-}
-.skeletal-layer .pelvis {
-  fill: rgba(138, 180, 188, 0.1);
-}
-.muscle-anatomy {
-  fill: rgba(67, 127, 132, 0.19);
-  stroke: rgba(81, 158, 158, 0.38);
-  stroke-width: 1;
-  transition:
-    fill 0.25s ease,
-    stroke 0.25s ease;
-}
-.muscle-back {
-  fill: rgba(85, 114, 139, 0.22);
-}
-.skin-region {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 18;
+
+.airway {
+  stroke: var(--be-trachea-s);
+  stroke-width: 1.4;
   pointer-events: stroke;
 }
-.system-hit {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 24;
+
+.heart {
+  --of: var(--be-heart);
+  --os: var(--be-heart-s);
+  transform-box: fill-box;
+  transform-origin: center;
 }
-.anatomy-region:hover .organ,
-.anatomy-region.is-selected .organ {
-  fill: #2bd5c0;
-  filter: drop-shadow(0 0 7px rgba(43, 213, 192, 0.75));
+
+.liver {
+  --of: var(--be-liver);
+  --os: var(--be-liver-s);
 }
-.region-heart.is-selected .heart {
-  fill: #ca5361;
-  stroke: #6ff5e6;
-  stroke-width: 2;
-  animation: heartRhythm 1.8s ease-in-out infinite;
+
+.stomach {
+  --of: var(--be-stomach);
+  --os: var(--be-stomach-s);
 }
-.region-lungs.is-selected .lung-left,
-.region-lungs.is-selected .lung-right {
-  fill: #37b9b2;
-  stroke: #8affef;
-  animation: lungBreath 4.6s ease-in-out infinite;
+
+.kidney {
+  --of: var(--be-kidney);
+  --os: var(--be-kidney-s);
 }
-.region-blood.is-selected .vessel {
-  stroke-dasharray: 7 7;
-  animation: circulationFlow 1.4s linear infinite;
-  filter: drop-shadow(0 0 4px rgba(49, 219, 198, 0.65));
+
+.bladder {
+  --of: var(--be-bladder);
+  --os: var(--be-bladder-s);
 }
-.region-brain.is-selected .brain,
-.region-eyes.is-selected .eye {
-  animation: neuralGlow 2.4s ease-in-out infinite;
+
+.brain {
+  --of: var(--be-brain);
+  --os: var(--be-brain-s);
 }
-.region-bones.is-selected .skeletal-layer {
-  stroke: #d5f8f3;
-  opacity: 1;
-  filter: drop-shadow(0 0 4px rgba(112, 167, 255, 0.45));
+
+.ear {
+  --of: var(--be-ear);
+  --os: var(--be-ear-s);
 }
-.region-muscles.is-selected .muscle-anatomy {
-  fill: rgba(49, 219, 198, 0.42);
-  stroke: #75e8db;
+
+.eye {
+  --of: var(--be-eye);
+  --os: var(--be-eye-s);
 }
-.anatomy-region:hover .system-hit,
-.anatomy-region.is-selected .system-hit {
-  stroke: rgba(49, 219, 198, 0.45);
-  filter: drop-shadow(0 0 5px rgba(49, 219, 198, 0.65));
-}
-.anatomy-callout {
+
+.pupil {
+  fill: var(--be-iris);
   pointer-events: none;
 }
-.active-callout path {
+
+.esophagus {
+  stroke: var(--be-liver-s);
+  stroke-width: 3;
+  opacity: 0.55;
+  pointer-events: stroke;
+}
+
+.adrenal {
+  stroke: #e0b04a;
+  stroke-width: 1.6;
+}
+
+.ureter {
+  stroke: var(--be-bladder-s);
+  stroke-width: 1.4;
+  pointer-events: stroke;
+}
+
+.gut {
   fill: none;
-  stroke: #4b8993;
+  stroke: var(--be-gut);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+  transition: filter 0.18s ease;
+}
+
+.gut-large {
+  stroke: var(--be-gut-l);
+  stroke-width: 6.5;
+}
+
+.cord {
+  fill: none;
+  stroke: var(--be-cord);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.85;
+  pointer-events: stroke;
+}
+
+/* ---------- Vessels ---------- */
+.vessel {
+  fill: none;
+  stroke: var(--be-artery);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+  transition: filter 0.18s ease, stroke-width 0.18s ease;
+}
+
+.vessel.vein {
+  stroke: var(--be-vein);
+  stroke-width: 1.4;
+}
+
+.vessel-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 10;
+  stroke-linecap: round;
+  pointer-events: stroke;
+}
+
+/* ---------- Skeleton ---------- */
+.bone {
+  fill: var(--be-bone);
+  stroke: var(--be-bone-s);
   stroke-width: 1;
-  stroke-dasharray: 3 3;
+  stroke-linejoin: round;
+  transition: stroke 0.2s ease, filter 0.2s ease;
 }
-.active-callout circle {
-  fill: var(--cyan);
-  stroke: #d4fff9;
+
+.bone-line {
+  fill: none;
+  stroke: var(--be-bone-s);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s ease;
+}
+
+.bone-line.long-bone {
+  stroke-width: 3.2;
+  opacity: 0.85;
+}
+
+.bone-line.rib {
+  stroke-width: 1.4;
+}
+
+.bone-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 9;
+  stroke-linecap: round;
+  pointer-events: stroke;
+}
+
+/* ---------- Muscles ---------- */
+.muscle {
+  fill: var(--be-muscle);
+  stroke: var(--be-muscle-s);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+
+/* ---------- Skin ---------- */
+.skin-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 10;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+  transition: stroke 0.2s ease, filter 0.2s ease;
+}
+
+/* ==========================================================================
+   Hover / selected
+   ========================================================================== */
+
+.anatomy-region:hover .organ,
+.anatomy-region.is-selected .organ {
+  stroke: var(--be-accent);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 4px var(--be-glow));
+}
+
+.anatomy-region:hover .gut,
+.anatomy-region.is-selected .gut,
+.anatomy-region:hover .cord,
+.anatomy-region.is-selected .cord {
+  filter: drop-shadow(0 0 4px var(--be-glow));
+}
+
+.anatomy-region:hover .vessel,
+.anatomy-region.is-selected .vessel {
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 3px var(--be-glow));
+}
+
+.anatomy-region:hover .vessel.vein,
+.anatomy-region.is-selected .vessel.vein {
+  stroke-width: 1.9;
+}
+
+.anatomy-region:hover .bone,
+.anatomy-region.is-selected .bone,
+.anatomy-region:hover .bone-line,
+.anatomy-region.is-selected .bone-line {
+  stroke: var(--be-accent);
+}
+
+.region-bones.is-selected .skeleton,
+.region-bones:hover .skeleton {
+  filter: drop-shadow(0 0 3px var(--be-glow));
+}
+
+.anatomy-region:hover .muscle,
+.anatomy-region.is-selected .muscle {
+  fill: var(--be-muscle-sel);
+  stroke: var(--be-accent);
+}
+
+.anatomy-region:hover .skin-hit,
+.anatomy-region.is-selected .skin-hit {
+  stroke: var(--be-select-band);
+  filter: drop-shadow(0 0 4px var(--be-glow));
+}
+
+/* ==========================================================================
+   Callout (HTML overlay positioned in percentages of the stage)
+   ========================================================================== */
+
+.callout-marker {
+  pointer-events: none;
+}
+
+.callout-dot {
+  fill: var(--be-accent);
+  stroke: var(--be-dot-ring);
+  stroke-width: 1.2;
+}
+
+.callout-halo {
+  fill: none;
+  stroke: var(--be-accent);
   stroke-width: 1;
+  opacity: 0.45;
 }
-.active-callout text {
-  fill: #d7f5f0;
-  font: 700 9px "DM Sans", sans-serif;
-  paint-order: stroke;
-  stroke: #071824;
-  stroke-width: 4px;
+
+.anatomy-callout {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
 }
-.active-callout .callout-subtitle {
-  fill: #5f8d9c;
-  font: 700 6px "Space Mono", monospace;
-  letter-spacing: 0.08em;
+
+.callout-left .callout-chip {
+  margin-left: 1.5cqw;
 }
-.anatomy-attribution {
-  color: #668494;
-  font-size: 9px;
-  line-height: 1.4;
+
+.callout-right .callout-chip {
+  margin-right: 1.5cqw;
+}
+
+.callout-line {
+  flex: 1;
+  min-width: 8px;
+  height: 0;
+  border-top: 1px dashed var(--be-leader);
+}
+
+.callout-chip,
+.callout-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 9px 5px;
+  border: 1px solid var(--be-chip-line);
+  border-radius: 8px;
+  background: var(--be-chip-bg);
+  color: var(--be-text);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.callout-chip {
+  flex: none;
+  max-width: 27cqw;
+}
+
+.callout-name {
+  font:
+    600 clamp(10px, 2.9cqw, 13px) / 1.18 "DM Sans",
+    system-ui,
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.callout-kicker {
+  color: var(--be-accent-text);
+  font:
+    700 7.5px / 1.2 "Space Mono",
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.callout-caption {
+  display: none;
+  position: absolute;
+  top: 1.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
   text-align: center;
+  z-index: 2;
+  pointer-events: none;
 }
-.body-canvas > p {
-  color: #607f91;
-  font-size: 12px;
-  z-index: 1;
+
+@container anatomy (max-width: 300px) {
+  .anatomy-callout {
+    display: none;
+  }
+
+  .callout-caption {
+    display: flex;
+  }
 }
+
+/* ==========================================================================
+   Info panel
+   ========================================================================== */
+
 .body-info {
   padding: 28px;
 }
+
 .body-detail-content {
   height: 100%;
 }
+
 .system-number {
   float: right;
-  color: #4f7085;
-  font: 700 8px "Space Mono", monospace;
+  color: var(--be-text-3);
+  font:
+    700 8px "Space Mono",
+    monospace;
 }
+
 .body-icon {
   width: 42px;
   height: 42px;
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: #0d303a;
-  color: var(--cyan);
+  background: var(--be-note-bg);
+  color: var(--be-accent-text);
   margin-bottom: 19px;
 }
+
 .body-info h2 {
   font-size: 30px;
   margin: 5px 0 20px;
 }
+
 .function-summary {
   padding: 0 0 15px;
 }
+
 .function-summary b {
-  color: #cbd9df;
   font-size: 12px;
 }
+
 .function-summary p {
   margin-top: 5px;
-  color: #91a6b3;
+  color: var(--be-text-2);
   font-size: 14px;
   line-height: 1.55;
 }
+
 .info-block {
   display: flex;
   gap: 11px;
   padding: 13px;
-  border: 1px solid #4e4634;
+  border: 1px solid var(--be-warn-line);
   border-radius: 8px;
-  background: #241f18;
+  background: var(--be-warn-bg);
 }
+
 .info-block svg {
-  color: var(--amber);
+  color: var(--be-warn);
   flex: none;
 }
+
 .info-block b,
 .detail-list b {
   font-size: 12px;
 }
+
 .info-block p,
 .detail-list p {
-  color: #8da0ac;
+  color: var(--be-text-2);
   font-size: 13px;
   line-height: 1.55;
   margin-top: 4px;
 }
-.detail-list > div {
+
+.detail-list>div {
   padding: 14px 0;
-  border-bottom: 1px solid #203848;
+  border-bottom: 1px solid var(--be-line);
 }
+
 .education-note {
   display: flex;
   gap: 9px;
   padding: 12px;
   margin: 15px 0;
-  background: #0a252f;
-  border: 1px solid #1c4a55;
+  background: var(--be-note-bg);
+  border: 1px solid var(--be-note-line);
   border-radius: 8px;
 }
+
 .education-note svg {
   flex: none;
-  color: var(--cyan);
+  color: var(--be-accent-text);
 }
+
 .education-note p {
-  color: #81a5aa;
+  color: var(--be-text-2);
   font-size: 12px;
   line-height: 1.5;
 }
+
 .region-pills {
-  grid-column: 1/-1;
+  grid-column: 1 / -1;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
+
 .region-pills button {
   padding: 7px 10px;
-  border: 1px solid #284458;
+  border: 1px solid var(--be-pill-line);
   border-radius: 20px;
-  background: #0c1d2b;
-  color: #708a9d;
+  background: var(--be-pill-bg);
+  color: var(--be-pill-text);
   font-size: 12px;
+  cursor: pointer;
 }
+
 .region-pills button.active {
-  color: #09221e;
-  background: var(--cyan);
-  border-color: var(--cyan);
+  color: var(--be-pill-active-text);
+  background: var(--be-accent);
+  border-color: var(--be-accent);
+}
+
+/* ==========================================================================
+   Motion – subtle, and only when the user has not asked to reduce it
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .anatomy-map {
+    animation: anatomyViewIn 0.35s ease both;
+  }
+
+  .scan-band {
+    opacity: 1;
+    animation: holoScan 9s linear infinite;
+  }
+
+  .ring-2 {
+    animation: holoRingSpin 24s linear infinite;
+  }
+
+  .heart {
+    animation: none;
+  }
+
+  .region-heart.is-selected .heart {
+    animation: heartBeat 2.4s ease-in-out infinite;
+  }
+
+  .region-lungs.is-selected .lung {
+    animation: lungBreath 6s ease-in-out infinite;
+  }
+
+  .region-blood.is-selected .vessel {
+    stroke-dasharray: 8 6;
+    animation: circulationFlow 2.4s linear infinite;
+  }
+}
+
+@keyframes anatomyViewIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes holoScan {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(560px);
+  }
+}
+
+@keyframes holoRingSpin {
+  to {
+    stroke-dashoffset: -56;
+  }
+}
+
+@keyframes heartBeat {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  15% {
+    transform: scale(1.03);
+  }
+
+  30% {
+    transform: scale(1);
+  }
+}
+
+@keyframes lungBreath {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes circulationFlow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+/* ==========================================================================
+   Responsive layout
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .body-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .body-info {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .canvas-hint span {
+    display: none;
+  }
 }

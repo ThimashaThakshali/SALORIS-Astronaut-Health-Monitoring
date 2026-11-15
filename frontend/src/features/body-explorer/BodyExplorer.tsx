@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Activity, AlertTriangle, ArrowRight, Info } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  Info,
+  MousePointerClick,
+} from "lucide-react";
 
 import { DemoBadge } from "../../components/common/DemoBadge";
 import { PageHeader } from "../../components/common/PageHeader";
@@ -27,20 +33,31 @@ export function BodyExplorer({ navigate }: { navigate: (page: Page) => void }) {
 
       <div className="body-layout">
         <Panel className="body-canvas">
-          <div className="view-toggle">
-            <button
-              className={!back ? "active" : ""}
-              onClick={() => setBack(false)}
-            >
-              Front
-            </button>
+          <div className="canvas-toolbar">
+            <div className="view-toggle" role="group" aria-label="Body view">
+              <button
+                type="button"
+                className={!back ? "active" : ""}
+                aria-pressed={!back}
+                onClick={() => setBack(false)}
+              >
+                Front
+              </button>
 
-            <button
-              className={back ? "active" : ""}
-              onClick={() => setBack(true)}
-            >
-              Back
-            </button>
+              <button
+                type="button"
+                className={back ? "active" : ""}
+                aria-pressed={back}
+                onClick={() => setBack(true)}
+              >
+                Back
+              </button>
+            </div>
+
+            <div className="canvas-hint">
+              <MousePointerClick size={14} aria-hidden="true" />
+              <span>Select a region to explore</span>
+            </div>
           </div>
 
           <AnatomyMap
@@ -49,8 +66,6 @@ export function BodyExplorer({ navigate }: { navigate: (page: Page) => void }) {
             onSelect={setSelected}
             view={back ? "back" : "front"}
           />
-
-          <p>Select a highlighted region to explore</p>
         </Panel>
 
         <Panel className="body-info">
@@ -123,9 +138,10 @@ export function BodyExplorer({ navigate }: { navigate: (page: Page) => void }) {
                 <Info size={16} />
 
                 <p>
-                  Anatomical motion is illustrative only and is not a
-                  physiological measurement. Compare changes with your
-                  individual baseline and mission context.
+                  Original SALORIS schematic for educational use. Anatomical
+                  motion is illustrative only and is not a physiological
+                  measurement or telemetry. Compare changes with your individual
+                  baseline and mission context.
                 </p>
               </div>
 
@@ -143,7 +159,9 @@ export function BodyExplorer({ navigate }: { navigate: (page: Page) => void }) {
         <div className="region-pills">
           {(Object.keys(bodySystems) as BodyRegion[]).map((region) => (
             <button
+              type="button"
               className={selected === region ? "active" : ""}
+              aria-pressed={selected === region}
               onClick={() => setSelected(region)}
               key={region}
             >

@@ -229,6 +229,25 @@ export const bodySystems = {
     assessment: "Nutrition & hydration",
     limits: "Food and symptom logs may be incomplete and are not diagnostic.",
   },
+  "Kidneys / urinary system": {
+    system: "Renal and urinary system",
+    function:
+      "Filters waste from the blood, regulates fluid and electrolyte balance, supports blood pressure regulation and produces urine.",
+    hazards:
+      "Fluid redistribution, dehydration, altered gravity, radiation exposure and changes in nutrition.",
+    risk:
+      "Microgravity-related fluid shifts and inadequate hydration may affect renal function and urinary health.",
+    indicators:
+      "Hydration status, urine output, electrolyte levels, kidney function markers and urinary symptoms.",
+    collection:
+      "Hydration log, urine sample analysis, medical examination and clinician-reviewed laboratory tests.",
+    guidance:
+      "Maintain planned hydration, report changes in urination and follow approved fluid and nutrition protocols.",
+    assessment: "Metabolic measurements",
+    limits:
+      "Hydration logs and urine observations cannot independently establish kidney function or diagnose renal disease.",
+  },
+
   Bones: {
     system: "Skeletal system",
     function: "Provides structural support, protects organs and stores minerals used throughout the body.",
