@@ -30,6 +30,7 @@ interface FormState {
   sleepQuality: string;
   mood: string;
   stress: number;
+  fatigue: number;
   recoveryNote: string;
   symptoms: string[];
   exerciseMinutes: string;
@@ -56,6 +57,7 @@ const initialForm = (): FormState => ({
   sleepQuality: "",
   mood: "",
   stress: 3,
+  fatigue: 3,
   recoveryNote: "",
   symptoms: [],
   exerciseMinutes: "",
@@ -120,6 +122,7 @@ export function CheckIn() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [pendingSubmissionId, setPendingSubmissionId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -271,6 +274,8 @@ export function CheckIn() {
       return;
     }
 
+    if (isSyncing) return;
+
     const submissionId = pendingSubmissionId ?? crypto.randomUUID();
     setPendingSubmissionId(submissionId);
 
@@ -293,6 +298,7 @@ export function CheckIn() {
         sleepQuality: form.sleepQuality,
         mood: parseOptionalNumber(form.mood),
         stress: form.stress,
+        fatigue: form.fatigue,
         note: form.recoveryNote.trim(),
       },
       symptoms: form.symptoms,
@@ -306,7 +312,15 @@ export function CheckIn() {
 
     try {
       saveHealthCheckIn(record);
+    } catch {
+      setSaveError(
+        "The check-in could not be saved locally. Check your browser storage settings and try again.",
+      );
+      return;
+    }
 
+    setIsSyncing(true);
+    try {
       const astronaut = await ensureAstronaut();
       const recordedAt = record.recordedAt;
       const source =
@@ -356,7 +370,7 @@ export function CheckIn() {
         sleepQuality: sleepQualityScore,
         mood: record.recovery.mood ?? undefined,
         stress: record.recovery.stress,
-        fatigue: undefined,
+        fatigue: record.recovery.fatigue,
         recordedAt,
         source,
         idempotencyKey: `${record.id}:wellbeing`,
@@ -391,6 +405,8 @@ export function CheckIn() {
       setSaveError(
         "Saved locally, but the backend could not accept this check-in. Check the backend connection and try again.",
       );
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -675,6 +691,19 @@ export function CheckIn() {
                       update("stress", Number(event.target.value))
                     }
                   />
+                  <label className="sub-label" htmlFor="fatigue">
+                    Fatigue: {form.fatigue}/5
+                  </label>
+                  <input
+                    id="fatigue"
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={form.fatigue}
+                    onChange={(event) =>
+                      update("fatigue", Number(event.target.value))
+                    }
+                  />
                 </Panel>
 
                 <Panel className="form-card">
@@ -826,8 +855,14 @@ export function CheckIn() {
               Continue <ArrowRight size={16} />
             </button>
           ) : (
-            <button type="button" className="primary-btn" onClick={saveCheckIn}>
-              Save local check-in <Check size={16} />
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={saveCheckIn}
+              disabled={isSyncing}
+            >
+              {isSyncing ? "Synchronizing..." : "Save and sync check-in"}{" "}
+              <Check size={16} />
             </button>
           )}
         </div>
@@ -835,7 +870,7 @@ export function CheckIn() {
         {saved && (
           <div className="save-note" role="status">
             <Check size={16} />
-            Check-in saved in this browser and successfully synchronized with the SALORIS backend. This prototype is not a medical record.
+            Check-in saved locally and successfully synchronized with the SALORIS backend. This prototype is not a medical record.
           </div>
         )}
 

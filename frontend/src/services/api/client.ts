@@ -22,6 +22,18 @@ export interface HealthReadingPayload {
   idempotencyKey: string;
 }
 
+export interface HealthReadingRecord {
+  id: string;
+  astronautId: string;
+  indicator: string;
+  value: number;
+  unit: string;
+  recordedAt: string;
+  source: string;
+  collectionMethod: string;
+  context?: string;
+}
+
 export interface WellbeingPayload {
   astronautId: string;
   sleepHours?: number;
@@ -70,6 +82,8 @@ export interface EmergencyEvent {
   resolvedAt?: string;
   idempotencyKey: string;
 }
+
+export type EmergencyEventStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -163,6 +177,12 @@ export function createHealthReading(
   });
 }
 
+export function getHealthReadings(
+  astronautId: string,
+): Promise<HealthReadingRecord[]> {
+  return request(`/health/readings/${astronautId}`);
+}
+
 export function createWellbeingCheckin(
   payload: WellbeingPayload,
 ): Promise<{ id: string }> {
@@ -172,6 +192,12 @@ export function createWellbeingCheckin(
   });
 }
 
+export function getWellbeingCheckins(
+  astronautId: string,
+): Promise<WellbeingPayload[]> {
+  return request(`/health/wellbeing/${astronautId}`);
+}
+
 export function createSymptom(
   payload: SymptomPayload,
 ): Promise<{ id: string }> {
@@ -179,6 +205,10 @@ export function createSymptom(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function getSymptoms(astronautId: string): Promise<SymptomPayload[]> {
+  return request(`/health/symptoms/${astronautId}`);
 }
 
 export function assessHealth(payload: {
@@ -209,5 +239,25 @@ export function createEmergencyEvent(payload: {
   return request("/health/emergency-events", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function getEmergencyEvents(
+  astronautId: string,
+): Promise<EmergencyEvent[]> {
+  return request(`/health/emergency-events/${astronautId}`);
+}
+
+export function acknowledgeEmergencyEvent(
+  eventId: string,
+): Promise<EmergencyEvent> {
+  return request(`/health/emergency-events/${eventId}/acknowledge`, {
+    method: "PATCH",
+  });
+}
+
+export function resolveEmergencyEvent(eventId: string): Promise<EmergencyEvent> {
+  return request(`/health/emergency-events/${eventId}/resolve`, {
+    method: "PATCH",
   });
 }

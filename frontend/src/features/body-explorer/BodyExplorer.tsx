@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Activity,
@@ -14,13 +14,65 @@ import { Panel } from "../../components/common/Panel";
 import AnatomyMap from "./components/AnatomyMap";
 import { bodySystems, type BodyRegion } from "../../data";
 import type { Page } from "../../types/navigation";
+import {
+  ensureAstronaut,
+  getHealthReadings,
+  type HealthReadingRecord,
+} from "../../services/api/client";
+
+const BODY_READING_INDICATORS: Partial<Record<BodyRegion, string[]>> = {
+  Heart: [
+    "HEART_RATE",
+    "SYSTOLIC_BLOOD_PRESSURE",
+    "DIASTOLIC_BLOOD_PRESSURE",
+  ],
+  Lungs: ["OXYGEN_SATURATION", "SPO2"],
+  Blood: ["BLOOD_GLUCOSE", "BLOOD_SUGAR"],
+};
 
 // Displays the interactive human body explorer.
 export function BodyExplorer({ navigate }: { navigate: (page: Page) => void }) {
   const [selected, setSelected] = useState<BodyRegion>("Heart");
   const [back, setBack] = useState(false);
+  const [readings, setReadings] = useState<HealthReadingRecord[]>([]);
+  const [readingsUnavailable, setReadingsUnavailable] = useState(false);
 
   const detail = bodySystems[selected];
+
+  useEffect(() => {
+    let active = true;
+    void ensureAstronaut()
+      .then((astronaut) => getHealthReadings(astronaut.id))
+      .then((records) => {
+        if (active) setReadings(records);
+      })
+      .catch(() => {
+        if (active) setReadingsUnavailable(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const latestReadings = Array.from(
+    readings.reduce((latest, reading) => {
+      const previous = latest.get(reading.indicator);
+      if (
+        !previous ||
+        new Date(reading.recordedAt).getTime() >
+          new Date(previous.recordedAt).getTime()
+      ) {
+        latest.set(reading.indicator, reading);
+      }
+      return latest;
+    }, new Map<string, HealthReadingRecord>()),
+  ).map(([, reading]) => reading);
+  const relevantReadings = BODY_READING_INDICATORS[selected]
+    ? latestReadings.filter((reading) =>
+        BODY_READING_INDICATORS[selected]?.includes(reading.indicator),
+      )
+    : [];
 
   return (
     <>
@@ -131,6 +183,38 @@ export function BodyExplorer({ navigate }: { navigate: (page: Page) => void }) {
                 <div>
                   <b>Prevention and monitoring guidance</b>
                   <p>{detail.guidance}</p>
+                </div>
+              </div>
+
+              <div className="info-block">
+                <Activity size={18} />
+                <div>
+                  <b>Latest available readings</b>
+                  {relevantReadings.length > 0 ? (
+                    <ul>
+                      {relevantReadings.map((reading) => {
+                        const stale =
+                          Date.now() - new Date(reading.recordedAt).getTime() >
+                          24 * 60 * 60 * 1000;
+                        return (
+                          <li key={reading.id}>
+                            {reading.indicator.replaceAll("_", " ")}:{" "}
+                            {reading.value} {reading.unit} · {reading.source} ·{" "}
+                            {stale ? "outdated" : "current"} ·{" "}
+                            {new Date(reading.recordedAt).toLocaleString()}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p>
+                      {readingsUnavailable
+                        ? "Backend readings are unavailable. No live measurement is shown."
+                        : BODY_READING_INDICATORS[selected]
+                          ? "No relevant backend readings are available yet."
+                          : "No direct backend indicator is mapped to this region yet."}
+                    </p>
+                  )}
                 </div>
               </div>
 

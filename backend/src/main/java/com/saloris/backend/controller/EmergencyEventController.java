@@ -44,7 +44,6 @@ public class EmergencyEventController {
 
         String idempotencyKey = requireIdempotencyKey(event.getIdempotencyKey());
         event.setIdempotencyKey(idempotencyKey);
-        boolean reportedAtProvided = event.getReportedAt() != null;
         event.setDescription(event.getDescription().trim());
         event.setStatus("OPEN");
         event.setResolvedAt(null);
@@ -52,7 +51,7 @@ public class EmergencyEventController {
         var existing = repository.findByAstronautIdAndIdempotencyKey(
                 astronautId, idempotencyKey);
         if (existing.isPresent()) {
-            if (isSameSubmission(event, existing.get(), reportedAtProvided)) {
+            if (isSameSubmission(event, existing.get())) {
                 return existing.get();
             }
             throw new ResponseStatusException(
@@ -66,7 +65,7 @@ public class EmergencyEventController {
             var duplicate = repository.findByAstronautIdAndIdempotencyKey(
                     astronautId, idempotencyKey);
             if (duplicate.isPresent()
-                    && isSameSubmission(event, duplicate.get(), reportedAtProvided)) {
+                    && isSameSubmission(event, duplicate.get())) {
                 return duplicate.get();
             }
             throw new ResponseStatusException(
@@ -128,8 +127,7 @@ public class EmergencyEventController {
 
     private boolean isSameSubmission(
             EmergencyEvent incoming,
-            EmergencyEvent existing,
-            boolean reportedAtProvided) {
+            EmergencyEvent existing) {
 
         return Objects.equals(incoming.getAstronautId(), existing.getAstronautId())
                 && Objects.equals(incoming.getDescription(), existing.getDescription());
