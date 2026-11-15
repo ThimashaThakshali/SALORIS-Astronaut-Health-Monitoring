@@ -1,0 +1,45 @@
+{
+  "input_file": "baseline_comparisons.csv",
+  "output_file": "anomaly_results.csv",
+  "input_rows": 4831,
+  "output_rows": 4831,
+  "classification_counts": {
+    "Insufficient data": 4,
+    "Missing measurement": 12,
+    "Unusual deviation": 1091,
+    "Within baseline variation": 3724
+  },
+  "subjects": [
+    "C001",
+    "C002",
+    "C003",
+    "C004"
+  ],
+  "panels": [
+    "CMP",
+    "cardiovascular",
+    "immune"
+  ],
+  "assays": [
+    "AlamarPanel",
+    "CMP",
+    "HD71",
+    "HDCVD9"
+  ],
+  "method": {
+    "name": "subject_baseline_z_score",
+    "threshold": 2.0,
+    "threshold_interpretation": "Exploratory descriptive heuristic only; not a clinical or NASA-validated cutoff.",
+    "isolation_forest": {
+      "implemented": false,
+      "reason": "The dataset provides only up to three baseline observations per subject/biomarker group, so a separate per-group Isolation Forest would not have meaningful training support."
+    }
+  },
+  "limitations": [
+    "OSD-575 contains four Inspiration4 subjects and is exploratory research data.",
+    "Results are not diagnoses, predictions, emergency alerts or clinically validated findings.",
+    "Rules-based health assessment remains separate and is not controlled by these classifications.",
+    "No missing value was classified as normal, and no data was imputed."
+  ],
+  "generated_at": "2026-11-15T16:57:26.653069+00:00"
+}
