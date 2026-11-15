@@ -78,7 +78,9 @@ def parse_xlsx(path: Path) -> dict[str, Any]:
         return _summarize_rows(path, [], [])
     columns = matrix[0]
     rows = [dict(zip(columns, values)) for values in matrix[1:]]
-    return _summarize_rows(path, columns, rows)
+    summary = _summarize_rows(path, columns, rows)
+    summary["rows_data"] = rows
+    return summary
 
 
 def _summarize_rows(path: Path, columns: list[str], rows: list[dict[str, str]]) -> dict[str, Any]:
@@ -95,7 +97,7 @@ def _summarize_rows(path: Path, columns: list[str], rows: list[dict[str, str]]) 
     }
     identifier_columns = [
         column for column in columns
-        if any(token in column.lower() for token in ("subject", "sample", "specimen", "id"))
+        if column.lower() in {"subject_id", "sample id", "sample name", "specimen_id", "id"}
     ]
     timepoint_columns = [
         column for column in columns
@@ -103,9 +105,19 @@ def _summarize_rows(path: Path, columns: list[str], rows: list[dict[str, str]]) 
     ]
     biomarker_columns = [
         column for column in columns
-        if column.lower() in {"analyte", "biomarker", "parameter"} or "concentration" in column.lower()
+        if column.lower() in {"analyte", "biomarker", "parameter"}
+        or ("_value" in column.lower() and "_range_" not in column.lower())
+        or ("_concentration_" in column.lower() and "_percent" not in column.lower())
     ]
-    unit_columns = [column for column in columns if "unit" in column.lower()]
+    unit_columns = [
+        column for column in columns
+        if column.lower() in {"units", "unit"}
+        or any(unit in column.lower() for unit in (
+            "_gram_per_", "_milligram_per_", "_millimol_per_",
+            "_nanogram_per_", "_picogram_per_", "_milliliter_per_",
+            "_units_per_",
+        ))
+    ]
     return {
         "file": path.name,
         "rows": len(rows),
@@ -138,5 +150,7 @@ def inspect_file(path: Path) -> dict[str, Any]:
     if path.suffix.lower() == ".csv":
         return parse_csv(path)
     if path.suffix.lower() == ".xlsx":
-        return parse_xlsx(path)
+        summary = parse_xlsx(path)
+        summary.pop("rows_data", None)
+        return summary
     raise ValueError(f"Unsupported tabular format: {path.suffix}")

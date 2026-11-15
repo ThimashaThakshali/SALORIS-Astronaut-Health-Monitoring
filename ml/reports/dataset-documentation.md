@@ -52,10 +52,25 @@ assay-specific; observed examples include `mg/dL`, `g/dL`, `U/L`, `mmol/L`,
   labelled `NULISA-seq` was returned for OSD-575, so NULISA-seq is unavailable
   in this acquisition and has not been fabricated.
 
+## Stage 2 preprocessing
+
+The normalized outputs in `data/processed/` are long-form CSVs with explicit
+representation, panel, assay, source filename and row, subject/sample
+identifiers, timepoint, flight phase, biomarker, value, units, reference
+ranges and missing-value reason. `observations_submitted.csv` and
+`observations_transformed.csv` remain separate to prevent double counting.
+Submitted observations are the downstream-analysis candidate; transformed
+observations are retained for audit and comparison only.
+
+The CMP transformed file is now classified by its `Sample Name` and
+`*_value_*` columns, so its biomarkers, subject IDs and `L-/R+` timepoints are
+identified rather than being mistaken for identifier or unit columns.
+
 ## Limitations
 
 OSD-575 is a small Inspiration4 study involving four crew members and a short
 mission. It is not representative of all astronauts or long-duration
-missions. Stage 1 performs acquisition and structural inspection only. No
-training, baseline construction, anomaly classification, clinical inference,
-preprocessing transformation or service endpoint has been added.
+missions. No values were imputed, no assay units were harmonized, and no
+observations were combined across panels or representations. No training,
+baseline construction, anomaly classification, clinical inference or service
+endpoint has been added.

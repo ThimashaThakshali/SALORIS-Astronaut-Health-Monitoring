@@ -6,7 +6,14 @@ backend and React frontend.
 
 Stage 1 does not train models, create a service, or make clinical claims.
 Original NASA downloads are kept under `data/raw/OSD-575/`; generated
-manifests and inspection reports are stored under `reports/`.
+manifests and inspection reports are stored under `reports/`. Stage 2 adds
+representation-preserving normalized observations under `data/processed/`.
+
+The submitted and NASA-transformed representations are intentionally emitted
+to separate files. The submitted representation is the downstream analysis
+candidate because it retains explicit assay fields, units and source rows;
+transformed data remains available for audit and comparison and must not be
+concatenated with submitted observations.
 
 The source study is the SpaceX Inspiration4 Blood Serum Metabolic Panel and
 Immune/Cardiac Cytokine Arrays study. The official OSDR file API identifies the
