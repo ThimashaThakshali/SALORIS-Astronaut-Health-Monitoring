@@ -1,48 +1,16 @@
-import { useState, type FormEvent } from "react";
+﻿import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AlertTriangle, ArrowRight, Check, Info } from "lucide-react";
 
 import { Panel } from "../../components/common/Panel";
 import { PageHeader } from "../../components/common/PageHeader";
-
 import type { ReadingMethod } from "../../data";
+import {
+  saveHealthCheckIn,
+  type HealthCheckIn,
+} from "../../services/storage/localStorage";
 
-// Instructions for collecting each vital measurement.
-const checkFields = [
-  [
-    "Heart rate",
-    "bpm",
-    "Sit quietly for 5 minutes, then count or use an approved monitor.",
-    "Shows cardiovascular workload and change from your personal baseline.",
-  ],
-  [
-    "Blood pressure",
-    "mmHg",
-    "Support your arm at heart level and keep both feet still.",
-    "Helps monitor cardiovascular adaptation and fluid shifts.",
-  ],
-  [
-    "Blood glucose",
-    "mg/dL",
-    "Record meal timing and follow approved device instructions.",
-    "Provides context for energy regulation and nutrition planning.",
-  ],
-  [
-    "Body temperature",
-    "°C",
-    "Use the same approved method and measurement site when possible.",
-    "A change may support review of illness, exertion or environment.",
-  ],
-  [
-    "Oxygen saturation",
-    "% SpO₂",
-    "Warm your hand, remove nail obstruction and remain still.",
-    "Supports assessment of oxygenation with symptoms and cabin readings.",
-  ],
-];
-
-// Describes the data collected in the vital measurements step.
-type CheckInForm = {
+interface FormState {
   heartRate: string;
   systolic: string;
   diastolic: string;
@@ -51,56 +19,290 @@ type CheckInForm = {
   oxygen: string;
   recordedAt: string;
   source: ReadingMethod;
-};
+  sleepHours: string;
+  sleepQuality: string;
+  mood: string;
+  stress: number;
+  recoveryNote: string;
+  symptoms: string[];
+  exerciseMinutes: string;
+  waterLitres: string;
+  meals: string;
+  context: string;
+}
 
-// Initial values for a new check-in.
-const initialCheckIn: CheckInForm = {
+function getLocalDateTimeInputValue(date = new Date()): string {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+const initialForm = (): FormState => ({
   heartRate: "",
   systolic: "",
   diastolic: "",
   glucose: "",
   temperature: "",
   oxygen: "",
-  recordedAt: new Date().toISOString().slice(0, 16),
+  recordedAt: getLocalDateTimeInputValue(),
   source: "Manual entry",
-};
+  sleepHours: "",
+  sleepQuality: "",
+  mood: "",
+  stress: 3,
+  recoveryNote: "",
+  symptoms: [],
+  exerciseMinutes: "",
+  waterLitres: "",
+  meals: "",
+  context: "",
+});
 
-// Displays the three-step health check-in form.
+const measurementFields = [
+  {
+    key: "heartRate",
+    label: "Heart rate",
+    unit: "bpm",
+    instruction:
+      "Sit quietly for 5 minutes, then count or use an approved monitor.",
+    why: "Shows cardiovascular workload and changes from a personal baseline.",
+    min: 20,
+    max: 250,
+  },
+  {
+    key: "glucose",
+    label: "Blood glucose",
+    unit: "mg/dL",
+    instruction: "Record meal timing and follow approved device instructions.",
+    why: "Provides context for energy regulation and nutrition planning.",
+    min: 20,
+    max: 600,
+  },
+  {
+    key: "temperature",
+    label: "Body temperature",
+    unit: "°C",
+    instruction:
+      "Use the same approved method and measurement site when possible.",
+    why: "Changes may support review of illness, exertion or environment.",
+    min: 30,
+    max: 45,
+  },
+  {
+    key: "oxygen",
+    label: "Oxygen saturation",
+    unit: "% SpO₂",
+    instruction: "Warm your hand, remove nail obstruction and remain still.",
+    why: "Supports assessment of oxygenation alongside symptoms and cabin readings.",
+    min: 50,
+    max: 100,
+  },
+] as const;
+
+type MeasurementKey = (typeof measurementFields)[number]["key"];
+
+function parseOptionalNumber(value: string): number | null {
+  if (value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function CheckIn() {
   const [step, setStep] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [form, setForm] = useState<FormState>(initialForm);
   const [attempted, setAttempted] = useState(false);
-  const [form, setForm] = useState(initialCheckIn);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
-  // Updates one vital measurement without changing the other values.
-  const update = <K extends keyof CheckInForm>(
-    key: K,
-    value: CheckInForm[K],
-  ) => {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
-
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
     setSaved(false);
+    setSaveError("");
   };
 
-  // Check whether at least one vital measurement was entered.
-  const enteredVitals = Object.entries(form)
-    .filter(([key]) => !["recordedAt", "source"].includes(key))
-    .some(([, value]) => value !== "");
+  const numericFields = [
+    { label: "Heart rate", value: form.heartRate, min: 20, max: 250 },
+    { label: "Blood glucose", value: form.glucose, min: 20, max: 600 },
+    { label: "Body temperature", value: form.temperature, min: 30, max: 45 },
+    { label: "Oxygen saturation", value: form.oxygen, min: 50, max: 100 },
+    { label: "Systolic pressure", value: form.systolic, min: 40, max: 300 },
+    { label: "Diastolic pressure", value: form.diastolic, min: 20, max: 200 },
+    { label: "Sleep duration", value: form.sleepHours, min: 0, max: 24 },
+    {
+      label: "Exercise duration",
+      value: form.exerciseMinutes,
+      min: 0,
+      max: 1440,
+    },
+    { label: "Water intake", value: form.waterLitres, min: 0, max: 20 },
+    { label: "Meals", value: form.meals, min: 0, max: 20 },
+  ];
 
-  const canSubmit =
-    enteredVitals && Boolean(form.recordedAt) && Boolean(form.source);
+  const validationErrors = numericFields
+    .filter(({ value, min, max }) => {
+      if (value.trim() === "") return false;
+      const number = Number(value);
+      return !Number.isFinite(number) || number < min || number > max;
+    })
+    .map(
+      ({ label, min, max }) => `${label} must be between ${min} and ${max}.`,
+    );
 
-  // Handles the final form submission.
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
+  if ((form.systolic.trim() === "") !== (form.diastolic.trim() === "")) {
+    validationErrors.push(
+      "Enter both systolic and diastolic blood pressure values.",
+    );
+  }
+
+  if (
+    form.systolic.trim() !== "" &&
+    form.diastolic.trim() !== "" &&
+    Number(form.systolic) <= Number(form.diastolic)
+  ) {
+    validationErrors.push(
+      "Systolic pressure must be greater than diastolic pressure.",
+    );
+  }
+
+  const enteredVitals = [
+    form.heartRate,
+    form.systolic,
+    form.diastolic,
+    form.glucose,
+    form.temperature,
+    form.oxygen,
+  ].some((value) => value.trim() !== "");
+
+  const validDate =
+    Boolean(form.recordedAt) &&
+    !Number.isNaN(new Date(form.recordedAt).getTime()) &&
+    new Date(form.recordedAt).getTime() <= Date.now();
+
+  const fieldError = (label: string) =>
+    validationErrors.find((error) => error.startsWith(`${label} `));
+
+  const dateError = !validDate
+    ? "Enter a valid recorded date and time that is not in the future."
+    : "";
+
+  const vitalLabels = [
+    "Heart rate",
+    "Blood glucose",
+    "Body temperature",
+    "Oxygen saturation",
+    "Systolic pressure",
+    "Diastolic pressure",
+  ];
+
+  const stepErrors =
+    step === 0
+      ? validationErrors.filter(
+          (error) =>
+            vitalLabels.some((label) => error.startsWith(label)) ||
+            error.includes("blood pressure") ||
+            error.includes("Systolic pressure must"),
+        )
+      : step === 1
+        ? validationErrors.filter((error) => error.startsWith("Sleep duration"))
+        : validationErrors;
+
+  const canSubmit = enteredVitals && validDate && validationErrors.length === 0;
+
+  // Explicitly move through the three existing steps.
+  const handleContinue = () => {
     setAttempted(true);
 
-    if (!canSubmit) return;
+    const hasStepError =
+      stepErrors.length > 0 || (step === 0 && (!enteredVitals || !validDate));
 
-    setSaved(true);
+    if (hasStepError) return;
+
+    setAttempted(false);
+
+    if (step === 0) {
+      setStep(1);
+    } else if (step === 1) {
+      setStep(2);
+    }
+  };
+
+  const toggleSymptom = (symptom: string) => {
+    setForm((current) => {
+      const selected = current.symptoms.includes(symptom)
+        ? current.symptoms.filter((item) => item !== symptom)
+        : [
+            ...current.symptoms.filter((item) => item !== "None to report"),
+            symptom,
+          ];
+
+      return {
+        ...current,
+        symptoms:
+          symptom === "None to report"
+            ? current.symptoms.includes(symptom)
+              ? []
+              : ["None to report"]
+            : selected,
+      };
+    });
+  };
+
+  const saveCheckIn = () => {
+    setAttempted(true);
+    setSaved(false);
+    setSaveError("");
+
+    if (step !== 2) {
+      return;
+    }
+
+    if (!canSubmit) {
+      setSaveError(
+        "Please check your entries. At least one valid vital measurement and a valid recorded date are required, and entered values must be within the allowed ranges.",
+      );
+      return;
+    }
+
+    const record: HealthCheckIn = {
+      id: crypto.randomUUID(),
+      recordedAt: new Date(form.recordedAt).toISOString(),
+      savedAt: new Date().toISOString(),
+      source: form.source,
+      simulated: form.source === "Simulated demonstration data",
+      vitals: {
+        heartRate: parseOptionalNumber(form.heartRate),
+        systolic: parseOptionalNumber(form.systolic),
+        diastolic: parseOptionalNumber(form.diastolic),
+        glucose: parseOptionalNumber(form.glucose),
+        temperature: parseOptionalNumber(form.temperature),
+        oxygen: parseOptionalNumber(form.oxygen),
+      },
+      recovery: {
+        sleepHours: parseOptionalNumber(form.sleepHours),
+        sleepQuality: form.sleepQuality,
+        mood: parseOptionalNumber(form.mood),
+        stress: form.stress,
+        note: form.recoveryNote.trim(),
+      },
+      symptoms: form.symptoms,
+      habits: {
+        exerciseMinutes: parseOptionalNumber(form.exerciseMinutes),
+        waterLitres: parseOptionalNumber(form.waterLitres),
+        meals: parseOptionalNumber(form.meals),
+      },
+      context: form.context.trim(),
+    };
+
+    try {
+      saveHealthCheckIn(record);
+      setSaved(true);
+      setAttempted(false);
+      setForm(initialForm());
+      setStep(0);
+    } catch {
+      setSaveError(
+        "The check-in could not be saved. Check your browser storage settings and try again.",
+      );
+    }
   };
 
   return (
@@ -108,7 +310,7 @@ export function CheckIn() {
       <PageHeader
         eyebrow="Guided collection"
         title="Health check-in"
-        description="Record measurements with context. Values are saved locally in this prototype and require crew medical review."
+        description="Record measurements with context. Entries are stored locally in this prototype and require crew medical review."
         action={<div className="step-count">Step {step + 1} of 3</div>}
       />
 
@@ -117,8 +319,15 @@ export function CheckIn() {
           (section, index) => (
             <button
               key={section}
+              type="button"
               className={index === step ? "active" : index < step ? "done" : ""}
-              onClick={() => setStep(index)}
+              disabled={index > step}
+              onClick={() => {
+                if (index <= step) {
+                  setAttempted(false);
+                  setStep(index);
+                }
+              }}
             >
               <span>{index < step ? <Check size={14} /> : index + 1}</span>
               {section}
@@ -127,7 +336,7 @@ export function CheckIn() {
         )}
       </div>
 
-      <form onSubmit={submit}>
+      <form onSubmit={(event) => event.preventDefault()}>
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -136,7 +345,6 @@ export function CheckIn() {
             exit={{ opacity: 0, x: -12 }}
             className="form-grid"
           >
-            {/* Step 1: Record vital measurements. */}
             {step === 0 && (
               <>
                 <Panel className="form-card collection-context">
@@ -144,7 +352,6 @@ export function CheckIn() {
                     <label htmlFor="measurement-source">
                       Collection method and source
                     </label>
-
                     <select
                       id="measurement-source"
                       value={form.source}
@@ -166,15 +373,20 @@ export function CheckIn() {
 
                   <div>
                     <label htmlFor="recorded-at">Date and time recorded</label>
-
                     <input
                       id="recorded-at"
                       type="datetime-local"
+                      max={getLocalDateTimeInputValue()}
                       value={form.recordedAt}
                       onChange={(event) =>
                         update("recordedAt", event.target.value)
                       }
                     />
+                    {attempted && dateError && (
+                      <p className="field-error" role="alert">
+                        {dateError}
+                      </p>
+                    )}
                   </div>
 
                   <p className="form-help">
@@ -183,126 +395,161 @@ export function CheckIn() {
                   </p>
                 </Panel>
 
-                {checkFields.map(([label, unit, instruction, why]) => {
-                  const field =
-                    label === "Heart rate"
-                      ? "heartRate"
-                      : label === "Blood glucose"
-                        ? "glucose"
-                        : label === "Body temperature"
-                          ? "temperature"
-                          : "oxygen";
+                {measurementFields.map((field) => (
+                  <Panel key={field.key} className="form-card">
+                    <label htmlFor={field.key}>
+                      {field.label}
+                      <span>Optional</span>
+                    </label>
 
-                  // Blood pressure has two separate input fields.
-                  if (label === "Blood pressure") {
-                    return (
-                      <Panel key={label} className="form-card">
-                        <label>
-                          {label}
-                          <span>Optional</span>
-                        </label>
+                    <div className="input-unit">
+                      <input
+                        id={field.key}
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        min={field.min}
+                        max={field.max}
+                        placeholder="Enter value"
+                        value={form[field.key]}
+                        onChange={(event) =>
+                          update(
+                            field.key as MeasurementKey,
+                            event.target.value,
+                          )
+                        }
+                      />
+                      <b>{field.unit}</b>
+                    </div>
+                    {attempted && fieldError(field.label) && (
+                      <p className="field-error" role="alert">
+                        {fieldError(field.label)}
+                      </p>
+                    )}
 
-                        <div className="blood-pressure-inputs">
-                          <label htmlFor="systolic">
-                            Systolic
-                            <input
-                              id="systolic"
-                              type="number"
-                              inputMode="decimal"
-                              value={form.systolic}
-                              onChange={(event) =>
-                                update("systolic", event.target.value)
-                              }
-                              placeholder="—"
-                            />
-                          </label>
+                    <details>
+                      <summary>
+                        <Info size={14} /> How to measure
+                      </summary>
+                      <p>{field.instruction}</p>
+                      <small>Why it matters: {field.why}</small>
+                    </details>
+                  </Panel>
+                ))}
 
-                          <span>/</span>
-
-                          <label htmlFor="diastolic">
-                            Diastolic
-                            <input
-                              id="diastolic"
-                              type="number"
-                              inputMode="decimal"
-                              value={form.diastolic}
-                              onChange={(event) =>
-                                update("diastolic", event.target.value)
-                              }
-                              placeholder="—"
-                            />
-                          </label>
-
-                          <b>{unit}</b>
-                        </div>
-
-                        <details>
-                          <summary>
-                            <Info size={14} />
-                            How to measure
-                          </summary>
-
-                          <p>{instruction}</p>
-                          <small>Why it matters: {why}</small>
-                        </details>
-                      </Panel>
-                    );
-                  }
-
-                  return (
-                    <Panel key={label} className="form-card">
-                      <label htmlFor={field}>
-                        {label}
-                        <span>Optional</span>
-                      </label>
-
-                      <div className="input-unit">
-                        <input
-                          id={field}
-                          type="number"
-                          inputMode="decimal"
-                          step="any"
-                          placeholder="Enter value"
-                          value={form[field]}
-                          onChange={(event) =>
-                            update(field, event.target.value)
-                          }
-                        />
-
-                        <b>{unit}</b>
-                      </div>
-
-                      <details>
-                        <summary>
-                          <Info size={14} />
-                          How to measure
-                        </summary>
-
-                        <p>{instruction}</p>
-                        <small>Why it matters: {why}</small>
-                      </details>
-                    </Panel>
-                  );
-                })}
+                <Panel className="form-card">
+                  <label>
+                    Blood pressure <span>Optional</span>
+                  </label>
+                  <div className="blood-pressure-inputs">
+                    <label htmlFor="systolic">
+                      Systolic
+                      <input
+                        id="systolic"
+                        type="number"
+                        min="40"
+                        max="300"
+                        value={form.systolic}
+                        onChange={(event) =>
+                          update("systolic", event.target.value)
+                        }
+                        placeholder="—"
+                      />
+                    </label>
+                    <span>/</span>
+                    <label htmlFor="diastolic">
+                      Diastolic
+                      <input
+                        id="diastolic"
+                        type="number"
+                        min="20"
+                        max="200"
+                        value={form.diastolic}
+                        onChange={(event) =>
+                          update("diastolic", event.target.value)
+                        }
+                        placeholder="—"
+                      />
+                    </label>
+                    <b>mmHg</b>
+                  </div>
+                  {attempted && fieldError("Systolic pressure") && (
+                    <p className="field-error" role="alert">
+                      {fieldError("Systolic pressure")}
+                    </p>
+                  )}
+                  {attempted && fieldError("Diastolic pressure") && (
+                    <p className="field-error" role="alert">
+                      {fieldError("Diastolic pressure")}
+                    </p>
+                  )}
+                  {attempted &&
+                    validationErrors.some(
+                      (error) =>
+                        error.includes("blood pressure") ||
+                        error.includes("Systolic pressure must"),
+                    ) && (
+                      <p className="field-error" role="alert">
+                        {validationErrors.find(
+                          (error) =>
+                            error.includes("blood pressure") ||
+                            error.includes("Systolic pressure must"),
+                        )}
+                      </p>
+                    )}
+                  <details>
+                    <summary>
+                      <Info size={14} /> How to measure
+                    </summary>
+                    <p>
+                      Support your arm at heart level and keep both feet still.
+                    </p>
+                    <small>
+                      Why it matters: Helps monitor cardiovascular adaptation
+                      and fluid shifts.
+                    </small>
+                  </details>
+                </Panel>
               </>
             )}
 
-            {/* Step 2: Collect recovery and wellbeing information. */}
             {step === 1 && (
               <>
                 <Panel className="form-card">
-                  <label>Sleep duration</label>
-
+                  <label htmlFor="sleep-hours">Sleep duration</label>
                   <div className="input-unit">
-                    <input type="number" step=".1" placeholder="7.5" />
+                    <input
+                      id="sleep-hours"
+                      type="number"
+                      min="0"
+                      max="24"
+                      step="0.1"
+                      placeholder="7.5"
+                      value={form.sleepHours}
+                      onChange={(event) =>
+                        update("sleepHours", event.target.value)
+                      }
+                    />
                     <b>hours</b>
                   </div>
+                  {attempted && fieldError("Sleep duration") && (
+                    <p className="field-error" role="alert">
+                      {fieldError("Sleep duration")}
+                    </p>
+                  )}
 
                   <label className="sub-label">Sleep quality</label>
-
                   <div className="choice-row">
                     {["Poor", "Fair", "Good", "Excellent"].map((quality) => (
-                      <button type="button" key={quality}>
+                      <button
+                        type="button"
+                        key={quality}
+                        className={
+                          form.sleepQuality === quality ? "active" : ""
+                        }
+                        aria-pressed={form.sleepQuality === quality}
+                        onClick={() => update("sleepQuality", quality)}
+                      >
                         {quality}
                       </button>
                     ))}
@@ -311,27 +558,46 @@ export function CheckIn() {
 
                 <Panel className="form-card">
                   <label>Mood</label>
-
                   <div className="scale">
                     {[1, 2, 3, 4, 5].map((value) => (
-                      <button type="button" key={value}>
+                      <button
+                        type="button"
+                        key={value}
+                        className={form.mood === String(value) ? "active" : ""}
+                        aria-pressed={form.mood === String(value)}
+                        onClick={() => update("mood", String(value))}
+                      >
                         {value}
                       </button>
                     ))}
                   </div>
-
                   <small>1 = very low · 5 = very positive</small>
 
-                  <label className="sub-label">Perceived stress</label>
-
-                  <input type="range" min="0" max="10" defaultValue="3" />
+                  <label className="sub-label" htmlFor="stress">
+                    Perceived stress: {form.stress}/10
+                  </label>
+                  <input
+                    id="stress"
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={form.stress}
+                    onChange={(event) =>
+                      update("stress", Number(event.target.value))
+                    }
+                  />
                 </Panel>
 
                 <Panel className="form-card">
-                  <label>Recovery note</label>
-
-                  <textarea placeholder="Add context about sleep interruptions, workload or concerns…" />
-
+                  <label htmlFor="recovery-note">Recovery note</label>
+                  <textarea
+                    id="recovery-note"
+                    value={form.recoveryNote}
+                    onChange={(event) =>
+                      update("recoveryNote", event.target.value)
+                    }
+                    placeholder="Add context about sleep interruptions, workload or concerns…"
+                  />
                   <p className="form-help">
                     Self-reported wellbeing supports trend review but is not a
                     mental health diagnosis.
@@ -340,12 +606,10 @@ export function CheckIn() {
               </>
             )}
 
-            {/* Step 3: Record symptoms and daily habits. */}
             {step === 2 && (
               <>
                 <Panel className="form-card">
                   <label>Symptoms</label>
-
                   <div className="check-list">
                     {[
                       "Headache",
@@ -356,7 +620,11 @@ export function CheckIn() {
                       "None to report",
                     ].map((symptom) => (
                       <label key={symptom}>
-                        <input type="checkbox" />
+                        <input
+                          type="checkbox"
+                          checked={form.symptoms.includes(symptom)}
+                          onChange={() => toggleSymptom(symptom)}
+                        />
                         {symptom}
                       </label>
                     ))}
@@ -365,33 +633,78 @@ export function CheckIn() {
 
                 <Panel className="form-card">
                   <label>Exercise & nutrition</label>
-
                   <div className="stack-input">
                     <span>
                       Exercise
-                      <input type="number" placeholder="45" />
+                      <input
+                        type="number"
+                        min="0"
+                        max="1440"
+                        value={form.exerciseMinutes}
+                        onChange={(event) =>
+                          update("exerciseMinutes", event.target.value)
+                        }
+                        placeholder="45"
+                      />
                       <b>min</b>
                     </span>
-
                     <span>
                       Water
-                      <input type="number" placeholder="2.1" />
+                      <input
+                        type="number"
+                        min="0"
+                        max="20"
+                        step="0.1"
+                        value={form.waterLitres}
+                        onChange={(event) =>
+                          update("waterLitres", event.target.value)
+                        }
+                        placeholder="2.1"
+                      />
                       <b>L</b>
                     </span>
-
                     <span>
                       Meals
-                      <input type="number" placeholder="3" />
+                      <input
+                        type="number"
+                        min="0"
+                        max="20"
+                        value={form.meals}
+                        onChange={(event) =>
+                          update("meals", event.target.value)
+                        }
+                        placeholder="3"
+                      />
                       <b>logged</b>
                     </span>
                   </div>
+                  {attempted && fieldError("Exercise duration") && (
+                    <p className="field-error" role="alert">
+                      {fieldError("Exercise duration")}
+                    </p>
+                  )}
+
+                  {attempted && fieldError("Water intake") && (
+                    <p className="field-error" role="alert">
+                      {fieldError("Water intake")}
+                    </p>
+                  )}
+
+                  {attempted && fieldError("Meals") && (
+                    <p className="field-error" role="alert">
+                      {fieldError("Meals")}
+                    </p>
+                  )}
                 </Panel>
 
                 <Panel className="form-card">
-                  <label>Additional context</label>
-
-                  <textarea placeholder="Describe any change from your normal baseline…" />
-
+                  <label htmlFor="additional-context">Additional context</label>
+                  <textarea
+                    id="additional-context"
+                    value={form.context}
+                    onChange={(event) => update("context", event.target.value)}
+                    placeholder="Describe any change from your normal baseline…"
+                  />
                   <p className="form-help">
                     New, severe or rapidly worsening symptoms should be
                     escalated using mission protocol.
@@ -407,7 +720,10 @@ export function CheckIn() {
             type="button"
             className="secondary-btn"
             disabled={step === 0}
-            onClick={() => setStep((current) => current - 1)}
+            onClick={() => {
+              setAttempted(false);
+              setStep((current) => Math.max(current - 1, 0));
+            }}
           >
             Back
           </button>
@@ -416,39 +732,29 @@ export function CheckIn() {
             <button
               type="button"
               className="primary-btn"
-              onClick={() => setStep((current) => current + 1)}
+              onClick={handleContinue}
             >
-              Continue
-              <ArrowRight size={16} />
+              Continue <ArrowRight size={16} />
             </button>
           ) : (
-            <button
-              className="primary-btn"
-              aria-describedby={!canSubmit ? "save-requirement" : undefined}
-            >
-              Save local check-in
-              <Check size={16} />
+            <button type="button" className="primary-btn" onClick={saveCheckIn}>
+              Save local check-in <Check size={16} />
             </button>
           )}
         </div>
 
-        {step === 2 && !canSubmit && (
-          <p
-            id="save-requirement"
-            className={
-              attempted ? "validation-note visible" : "validation-note"
-            }
-          >
-            <AlertTriangle size={15} />
-            Enter at least one vital measurement in step 1 before saving.
-          </p>
-        )}
-
         {saved && (
           <div className="save-note" role="status">
             <Check size={16} />
-            Check-in stored in this browser session only. No server or medical
+            Check-in successfully saved in this browser. No server or medical
             system received it.
+          </div>
+        )}
+
+        {saveError && (
+          <div className="validation-note visible" role="alert">
+            <AlertTriangle size={15} />
+            {saveError}
           </div>
         )}
       </form>
