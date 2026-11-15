@@ -80,6 +80,7 @@ public class HealthReadingController {
         }
 
         reading.setIdempotencyKey(key);
+        boolean recordedAtProvided = reading.getRecordedAt() != null;
 
         String source = reading.getSource()
                 .trim().toUpperCase(Locale.ROOT);
@@ -125,7 +126,7 @@ public class HealthReadingController {
         if (existing.isPresent()) {
             HealthReading saved = existing.get();
 
-            if (isSameSubmission(reading, saved)) {
+            if (isSameSubmission(reading, saved, recordedAtProvided)) {
                 return saved;
             }
 
@@ -142,7 +143,7 @@ public class HealthReadingController {
                             reading.getAstronautId(), key);
 
             if (duplicate.isPresent()
-                    && isSameSubmission(reading, duplicate.get())) {
+                    && isSameSubmission(reading, duplicate.get(), recordedAtProvided)) {
                 return duplicate.get();
             }
 
@@ -154,9 +155,10 @@ public class HealthReadingController {
 
     private boolean isSameSubmission(
             HealthReading incoming,
-            HealthReading existing) {
+            HealthReading existing,
+            boolean recordedAtProvided) {
 
-        boolean sameTimestamp = incoming.getRecordedAt() == null
+        boolean sameTimestamp = !recordedAtProvided
                 || (existing.getRecordedAt() != null
                 && incoming.getRecordedAt().isEqual(existing.getRecordedAt()));
 

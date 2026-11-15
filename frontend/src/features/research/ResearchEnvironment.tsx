@@ -9,26 +9,46 @@ import { environmentReadings, radiationRecord } from "../../data";
 
 // Describes the five major hazards of human spaceflight.
 const hazards = [
-  [
-    "Radiation",
-    "Beyond Earth's protective magnetic field, ionising radiation can increase long-term health risks.",
-  ],
-  [
-    "Isolation & confinement",
-    "Limited space, separation and operational stress can affect behavioural health and team performance.",
-  ],
-  [
-    "Distance from Earth",
-    "Communication delays and limited evacuation increase the need for crew autonomy and robust procedures.",
-  ],
-  [
-    "Gravity fields",
-    "Transitions between microgravity and partial gravity affect bones, muscles, balance and cardiovascular function.",
-  ],
-  [
-    "Hostile environments",
-    "Closed habitats, dust, pressure boundaries and limited resources create complex exposure risks.",
-  ],
+  {
+    name: "Space radiation",
+    meaning:
+      "Ionising radiation is higher beyond Earth's protective atmosphere and magnetic field.",
+    monitoring:
+      "SALORIS can label radiation records and mission context, but it does not calculate dose limits or cancer risk.",
+    source: "https://www.nasa.gov/hrp/hazards/",
+  },
+  {
+    name: "Isolation and confinement",
+    meaning:
+      "Small crews live and work together for long periods with limited privacy and outside contact.",
+    monitoring:
+      "Wellbeing check-ins, sleep, stress, mood and symptom observations can support trend review; they are not a psychiatric assessment.",
+    source: "https://www.nasa.gov/hrp/risks/",
+  },
+  {
+    name: "Distance from Earth",
+    meaning:
+      "Communication delay and limited evacuation increase the need for crew autonomy and clear onboard records.",
+    monitoring:
+      "SALORIS keeps source-labelled readings, explanations and emergency procedures available locally, but does not provide mission communications.",
+    source: "https://www.nasa.gov/hrp/hazards/",
+  },
+  {
+    name: "Gravity fields",
+    meaning:
+      "Microgravity and transitions to partial or full gravity affect bones, muscles, balance and cardiovascular adaptation.",
+    monitoring:
+      "Heart rate, blood pressure, oxygen saturation, exercise context and symptoms provide partial context; specialist testing is still required.",
+    source: "https://www.nasa.gov/hrp/risks/",
+  },
+  {
+    name: "Hostile and closed environments",
+    meaning:
+      "Pressure boundaries, atmosphere, dust, temperature and limited resources create interacting operational hazards.",
+    monitoring:
+      "The environment page labels simulated indicators and does not present them as NASA telemetry or apply operational thresholds.",
+    source: "https://www.nasa.gov/hrp/hazards/",
+  },
 ];
 
 // Lists health risks associated with spaceflight.
@@ -57,7 +77,9 @@ export function ResearchEnvironment() {
 
   // Filters hazards based on the search text.
   const filtered = hazards.filter((hazard) =>
-    hazard.join(" ").toLowerCase().includes(query.toLowerCase()),
+    `${hazard.name} ${hazard.meaning} ${hazard.monitoring}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
   );
 
   // The health tasks displayed on this page.
@@ -150,10 +172,14 @@ export function ResearchEnvironment() {
 
       <div className="hazard-grid">
         {filtered.map((hazard, index) => (
-          <article key={hazard[0]}>
+          <article key={hazard.name}>
             <span>{String(index + 1).padStart(2, "0")}</span>
-            <h3>{hazard[0]}</h3>
-            <p>{hazard[1]}</p>
+            <h3>{hazard.name}</h3>
+            <p>{hazard.meaning}</p>
+            <p><b>What SALORIS can monitor:</b> {hazard.monitoring}</p>
+            <a href={hazard.source} target="_blank" rel="noreferrer">
+              NASA source <ArrowRight size={13} />
+            </a>
           </article>
         ))}
       </div>
@@ -176,6 +202,28 @@ export function ResearchEnvironment() {
               </span>
             ))}
           </div>
+
+          <Panel className="research-limitations">
+            <span className="eyebrow">Evidence and limitations</span>
+            <h2>Research centre source register</h2>
+            <p>
+              SALORIS explanations connect public spaceflight research to
+              source-labelled self-reported observations and measurements. SALORIS
+              does not reproduce NASA or CSA studies, use their datasets, diagnose
+              illness or replace professional medical care.
+            </p>
+            <div className="reference-grid">
+              <a href="https://www.nasa.gov/hrp/risks/" target="_blank" rel="noreferrer">
+                NASA Human Research Program risks <ArrowRight size={13} />
+              </a>
+              <a href="https://www.asc-csa.gc.ca/eng/iss/cans.asp" target="_blank" rel="noreferrer">
+                CSA: Canadian Active Neutron Spectrometer (CANS) <ArrowRight size={13} />
+              </a>
+              <a href="https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp" target="_blank" rel="noreferrer">
+                CSA: Why conduct science experiments in space? <ArrowRight size={13} />
+              </a>
+            </div>
+          </Panel>
         </Panel>
 
         <Panel>

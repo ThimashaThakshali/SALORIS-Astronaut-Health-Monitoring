@@ -5,7 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 public interface SymptomReportRepository extends JpaRepository<SymptomReport, UUID> {
     List<SymptomReport> findByAstronautIdOrderByReportedAtDesc(UUID astronautId);
+
+    Optional<SymptomReport> findByAstronautIdAndIdempotencyKey(
+            UUID astronautId, String idempotencyKey);
 }

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AlertTriangle, ArrowRight, Check, Info } from "lucide-react";
 
@@ -9,6 +9,13 @@ import {
   saveHealthCheckIn,
   type HealthCheckIn,
 } from "../../services/storage/localStorage";
+import {
+  assessHealth,
+  createHealthReading,
+  createSymptom,
+  createWellbeingCheckin,
+  ensureAstronaut,
+} from "../../services/api/client";
 
 interface FormState {
   heartRate: string;
@@ -23,6 +30,7 @@ interface FormState {
   sleepQuality: string;
   mood: string;
   stress: number;
+  fatigue: number;
   recoveryNote: string;
   symptoms: string[];
   exerciseMinutes: string;
@@ -49,6 +57,7 @@ const initialForm = (): FormState => ({
   sleepQuality: "",
   mood: "",
   stress: 3,
+  fatigue: 3,
   recoveryNote: "",
   symptoms: [],
   exerciseMinutes: "",
@@ -80,7 +89,7 @@ const measurementFields = [
   {
     key: "temperature",
     label: "Body temperature",
-    unit: "°C",
+    unit: "Â°C",
     instruction:
       "Use the same approved method and measurement site when possible.",
     why: "Changes may support review of illness, exertion or environment.",
@@ -90,7 +99,7 @@ const measurementFields = [
   {
     key: "oxygen",
     label: "Oxygen saturation",
-    unit: "% SpO₂",
+    unit: "% SpO2",
     instruction: "Warm your hand, remove nail obstruction and remain still.",
     why: "Supports assessment of oxygenation alongside symptoms and cabin readings.",
     min: 50,
@@ -112,10 +121,13 @@ export function CheckIn() {
   const [attempted, setAttempted] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [pendingSubmissionId, setPendingSubmissionId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
     setSaved(false);
+    setPendingSubmissionId(null);
     setSaveError("");
   };
 
@@ -246,7 +258,7 @@ export function CheckIn() {
     });
   };
 
-  const saveCheckIn = () => {
+  const saveCheckIn = async () => {
     setAttempted(true);
     setSaved(false);
     setSaveError("");
@@ -262,8 +274,13 @@ export function CheckIn() {
       return;
     }
 
+    if (isSyncing) return;
+
+    const submissionId = pendingSubmissionId ?? crypto.randomUUID();
+    setPendingSubmissionId(submissionId);
+
     const record: HealthCheckIn = {
-      id: crypto.randomUUID(),
+      id: submissionId,
       recordedAt: new Date(form.recordedAt).toISOString(),
       savedAt: new Date().toISOString(),
       source: form.source,
@@ -281,6 +298,7 @@ export function CheckIn() {
         sleepQuality: form.sleepQuality,
         mood: parseOptionalNumber(form.mood),
         stress: form.stress,
+        fatigue: form.fatigue,
         note: form.recoveryNote.trim(),
       },
       symptoms: form.symptoms,
@@ -294,14 +312,101 @@ export function CheckIn() {
 
     try {
       saveHealthCheckIn(record);
+    } catch {
+      setSaveError(
+        "The check-in could not be saved locally. Check your browser storage settings and try again.",
+      );
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const astronaut = await ensureAstronaut();
+      const recordedAt = record.recordedAt;
+      const source =
+        form.source === "Manual entry"
+          ? "MANUAL"
+          : form.source === "Wearable device"
+            ? "WEARABLE"
+            : form.source === "Medical instrument"
+              ? "MEDICAL_DEVICE"
+              : form.source === "Imported data"
+                ? "NASA_DATA"
+                : "SIMULATED";
+      const sleepQualityScore = {
+        Poor: 1,
+        Fair: 2,
+        Good: 3,
+        Excellent: 4,
+      }[record.recovery.sleepQuality];
+      const readings = [
+        ["HEART_RATE", record.vitals.heartRate, "BPM"],
+        ["SYSTOLIC_BLOOD_PRESSURE", record.vitals.systolic, "MMHG"],
+        ["DIASTOLIC_BLOOD_PRESSURE", record.vitals.diastolic, "MMHG"],
+        ["BLOOD_GLUCOSE", record.vitals.glucose, "MG/DL"],
+        ["BODY_TEMPERATURE", record.vitals.temperature, "C"],
+        ["OXYGEN_SATURATION", record.vitals.oxygen, "%"],
+      ] as const;
+      const readingResponses = await Promise.all(
+        readings
+          .filter(([, value]) => value !== null)
+          .map(([indicator, value, unit]) =>
+            createHealthReading({
+              astronautId: astronaut.id,
+              indicator,
+              value: value as number,
+              unit,
+              recordedAt,
+              source,
+              collectionMethod: source === "MANUAL" ? "MANUAL_ENTRY" : source,
+              context: record.context,
+              idempotencyKey: `${record.id}:${indicator}`,
+            }),
+          ),
+      );
+      const wellbeingResponse = await createWellbeingCheckin({
+        astronautId: astronaut.id,
+        sleepHours: record.recovery.sleepHours ?? undefined,
+        sleepQuality: sleepQualityScore,
+        mood: record.recovery.mood ?? undefined,
+        stress: record.recovery.stress,
+        fatigue: record.recovery.fatigue,
+        recordedAt,
+        source,
+        idempotencyKey: `${record.id}:wellbeing`,
+      });
+      const symptomResponses = await Promise.all(
+        record.symptoms
+          .filter((symptom) => symptom !== "None to report")
+          .map((symptom, index) =>
+            createSymptom({
+              astronautId: astronaut.id,
+              symptom,
+              severity: 3,
+              reportedAt: recordedAt,
+              source,
+              idempotencyKey: `${record.id}:symptom:${index}`,
+            }),
+          ),
+      );
+      await assessHealth({
+        astronautId: astronaut.id,
+        healthReadingIds: readingResponses.map((reading) => reading.id),
+        wellbeingCheckinIds: [wellbeingResponse.id],
+        symptomReportIds: symptomResponses.map((symptom) => symptom.id),
+      });
+
       setSaved(true);
+      setPendingSubmissionId(null);
       setAttempted(false);
       setForm(initialForm());
       setStep(0);
     } catch {
       setSaveError(
-        "The check-in could not be saved. Check your browser storage settings and try again.",
+        "Saved locally, but the backend could not accept this check-in. Check the backend connection and try again.",
       );
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -453,7 +558,7 @@ export function CheckIn() {
                         onChange={(event) =>
                           update("systolic", event.target.value)
                         }
-                        placeholder="—"
+                        placeholder="Enter value"
                       />
                     </label>
                     <span>/</span>
@@ -468,7 +573,7 @@ export function CheckIn() {
                         onChange={(event) =>
                           update("diastolic", event.target.value)
                         }
-                        placeholder="—"
+                        placeholder="Enter value"
                       />
                     </label>
                     <b>mmHg</b>
@@ -571,19 +676,32 @@ export function CheckIn() {
                       </button>
                     ))}
                   </div>
-                  <small>1 = very low · 5 = very positive</small>
+                  <small>1 = very low | 5 = very positive</small>
 
                   <label className="sub-label" htmlFor="stress">
-                    Perceived stress: {form.stress}/10
+                    Perceived stress: {form.stress}/5
                   </label>
                   <input
                     id="stress"
                     type="range"
-                    min="0"
-                    max="10"
+                    min="1"
+                    max="5"
                     value={form.stress}
                     onChange={(event) =>
                       update("stress", Number(event.target.value))
+                    }
+                  />
+                  <label className="sub-label" htmlFor="fatigue">
+                    Fatigue: {form.fatigue}/5
+                  </label>
+                  <input
+                    id="fatigue"
+                    type="range"
+                    min="1"
+                    max="5"
+                    value={form.fatigue}
+                    onChange={(event) =>
+                      update("fatigue", Number(event.target.value))
                     }
                   />
                 </Panel>
@@ -596,7 +714,7 @@ export function CheckIn() {
                     onChange={(event) =>
                       update("recoveryNote", event.target.value)
                     }
-                    placeholder="Add context about sleep interruptions, workload or concerns…"
+                    placeholder="Add context about sleep interruptions, workload or concerns..."
                   />
                   <p className="form-help">
                     Self-reported wellbeing supports trend review but is not a
@@ -703,7 +821,7 @@ export function CheckIn() {
                     id="additional-context"
                     value={form.context}
                     onChange={(event) => update("context", event.target.value)}
-                    placeholder="Describe any change from your normal baseline…"
+                    placeholder="Describe any change from your normal baseline..."
                   />
                   <p className="form-help">
                     New, severe or rapidly worsening symptoms should be
@@ -737,8 +855,14 @@ export function CheckIn() {
               Continue <ArrowRight size={16} />
             </button>
           ) : (
-            <button type="button" className="primary-btn" onClick={saveCheckIn}>
-              Save local check-in <Check size={16} />
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={saveCheckIn}
+              disabled={isSyncing}
+            >
+              {isSyncing ? "Synchronizing..." : "Save and sync check-in"}{" "}
+              <Check size={16} />
             </button>
           )}
         </div>
@@ -746,8 +870,7 @@ export function CheckIn() {
         {saved && (
           <div className="save-note" role="status">
             <Check size={16} />
-            Check-in successfully saved in this browser. No server or medical
-            system received it.
+            Check-in saved locally and successfully synchronized with the SALORIS backend. This prototype is not a medical record.
           </div>
         )}
 

@@ -21,6 +21,7 @@ export interface HealthCheckIn {
     sleepQuality: string;
     mood: number | null;
     stress: number;
+    fatigue: number;
     note: string;
   };
 

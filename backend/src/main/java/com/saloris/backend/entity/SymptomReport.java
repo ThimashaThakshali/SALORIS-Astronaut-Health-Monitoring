@@ -29,6 +29,9 @@ public class SymptomReport {
     @Column(nullable = false, length = 30)
     private String source = "MANUAL";
 
+    @Column(name = "idempotency_key", length = 100)
+    private String idempotencyKey;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -47,5 +50,7 @@ public class SymptomReport {
     public void setReportedAt(OffsetDateTime v) { reportedAt = v; }
     public String getSource() { return source; }
     public void setSource(String v) { source = v; }
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String v) { idempotencyKey = v; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }

@@ -26,6 +26,9 @@ public class EmergencyEvent {
     @Column(name = "resolved_at")
     private OffsetDateTime resolvedAt;
 
+    @Column(name = "idempotency_key", length = 100)
+    private String idempotencyKey;
+
     public EmergencyEvent() {}
 
     public UUID getId() { return id; }
@@ -38,4 +41,6 @@ public class EmergencyEvent {
     public OffsetDateTime getReportedAt() { return reportedAt; }
     public OffsetDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(OffsetDateTime v) { resolvedAt = v; }
+    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setIdempotencyKey(String v) { idempotencyKey = v; }
 }

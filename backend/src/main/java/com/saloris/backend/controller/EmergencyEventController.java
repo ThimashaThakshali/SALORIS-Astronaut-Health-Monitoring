@@ -4,12 +4,14 @@ import com.saloris.backend.entity.EmergencyEvent;
 import com.saloris.backend.repository.AstronautRepository;
 import com.saloris.backend.repository.EmergencyEventRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/health/emergency-events")
@@ -40,10 +42,36 @@ public class EmergencyEventController {
                     HttpStatus.BAD_REQUEST, "Event description is required");
         }
 
+        String idempotencyKey = requireIdempotencyKey(event.getIdempotencyKey());
+        event.setIdempotencyKey(idempotencyKey);
+        event.setDescription(event.getDescription().trim());
         event.setStatus("OPEN");
         event.setResolvedAt(null);
 
-        return repository.save(event);
+        var existing = repository.findByAstronautIdAndIdempotencyKey(
+                astronautId, idempotencyKey);
+        if (existing.isPresent()) {
+            if (isSameSubmission(event, existing.get())) {
+                return existing.get();
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "This idempotency key was already used for different emergency data");
+        }
+
+        try {
+            return repository.saveAndFlush(event);
+        } catch (DataIntegrityViolationException exception) {
+            var duplicate = repository.findByAstronautIdAndIdempotencyKey(
+                    astronautId, idempotencyKey);
+            if (duplicate.isPresent()
+                    && isSameSubmission(event, duplicate.get())) {
+                return duplicate.get();
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Duplicate submission key or database constraint violation");
+        }
     }
 
     @GetMapping("/{astronautId}")
@@ -72,6 +100,10 @@ public class EmergencyEventController {
     public EmergencyEvent resolve(@PathVariable UUID eventId) {
         EmergencyEvent event = getEvent(eventId);
 
+        if ("RESOLVED".equals(event.getStatus())) {
+            return event;
+        }
+
         event.setStatus("RESOLVED");
         event.setResolvedAt(OffsetDateTime.now());
 
@@ -82,5 +114,22 @@ public class EmergencyEventController {
         return repository.findById(eventId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Emergency event not found"));
+    }
+
+    private String requireIdempotencyKey(String value) {
+        if (value == null || value.isBlank() || value.trim().length() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Idempotency key is required and cannot exceed 100 characters");
+        }
+        return value.trim();
+    }
+
+    private boolean isSameSubmission(
+            EmergencyEvent incoming,
+            EmergencyEvent existing) {
+
+        return Objects.equals(incoming.getAstronautId(), existing.getAstronautId())
+                && Objects.equals(incoming.getDescription(), existing.getDescription());
     }
 }

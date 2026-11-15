@@ -308,6 +308,14 @@ html[data-theme="light"] .system-number,
 html[data-theme="light"] .anatomy-attribution {
   color: var(--text-muted);
 }
+html[data-theme="light"] .profile-setup {
+  --app-bg: #f2f7f7;
+  --surface: #ffffff;
+  --border: #c8d8dc;
+  --text-primary: #17323b;
+  --text-muted: #60757d;
+  --input-bg: #f8fbfb;
+}
 
 html[data-theme="light"] .body-icon {
   background: #d7eeeb;
@@ -705,7 +713,7 @@ html[data-theme="light"] .week-grid .today i {
   background: #066b66;
 }
 
-/* Check-in selection buttons — light theme */
+/* Check-in selection buttons ï¿½ light theme */
 html[data-theme="light"] .choice-row button:hover,
 html[data-theme="light"] .scale button:hover {
   border-color: #168f82;

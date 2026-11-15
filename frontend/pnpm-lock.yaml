@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      framer-motion:
+        specifier: 14.14.0
+        version: 14.14.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
         specifier: ^1.72.0
         version: 1.72.0(@types/react@19.2.14)(react@19.2.4)

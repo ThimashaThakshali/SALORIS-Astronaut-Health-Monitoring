@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -10,6 +10,15 @@ import {
 
 import { PageHeader } from "../../components/common/PageHeader";
 import { Panel } from "../../components/common/Panel";
+import {
+  acknowledgeEmergencyEvent,
+  createEmergencyEvent,
+  ensureAstronaut,
+  getEmergencyEvents,
+  resolveEmergencyEvent,
+  type EmergencyEvent,
+  type Astronaut,
+} from "../../services/api/client";
 
 // Demonstration-only emergency reference content.
 // Operational procedures must be approved by mission medical leadership.
@@ -41,11 +50,85 @@ const emergencies = [
 ];
 
 type ActivationState = "idle" | "confirm" | "demo";
+type EventStatus = "idle" | "syncing" | "success" | "failure";
 
 // Displays emergency reference guidance and a local SOS demonstration.
-export function Emergency() {
+export function Emergency({ astronaut }: { astronaut: Astronaut | null }) {
   const [active, setActive] = useState(0);
   const [activation, setActivation] = useState<ActivationState>("idle");
+  const [eventMessage, setEventMessage] = useState("");
+  const [eventStatus, setEventStatus] = useState<EventStatus>("idle");
+  const [backendEvent, setBackendEvent] = useState<EmergencyEvent | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    if (!astronaut) return;
+    void ensureAstronaut()
+      .then((astronaut) => getEmergencyEvents(astronaut.id))
+      .then((events) => {
+        const latest = events[0];
+        if (active && latest) {
+          setBackendEvent(latest);
+          setActivation("demo");
+          setEventStatus("success");
+          setEventMessage("Latest demonstration event loaded from the backend.");
+        }
+      })
+      .catch(() => {
+        // The local demonstration remains usable when the backend is offline.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [astronaut]);
+
+  const createDemoEvent = async () => {
+    setEventStatus("syncing");
+    setEventMessage("Synchronizing the demonstration event with the backend.");
+    setActivation("demo");
+
+    try {
+      if (!astronaut) {
+        throw new Error("No astronaut profile selected");
+      }
+      const event = await createEmergencyEvent({
+        astronautId: astronaut.id,
+        description: `Demonstration SOS: ${emergencies[active][0]}`,
+        idempotencyKey: `demo-sos:${Date.now()}`,
+      });
+      setBackendEvent(event);
+      setEventStatus("success");
+      setEventMessage("The demonstration event was synchronized with the backend.");
+    } catch {
+      setEventStatus("failure");
+      setEventMessage(
+        "The demonstration event remains local because the backend is unavailable.",
+      );
+    }
+  };
+
+  const acknowledgeEvent = async () => {
+    if (!backendEvent) return;
+    try {
+      const event = await acknowledgeEmergencyEvent(backendEvent.id);
+      setBackendEvent(event);
+      setEventMessage("The backend event is acknowledged.");
+    } catch {
+      setEventMessage("The backend event could not be acknowledged.");
+    }
+  };
+
+  const resolveEvent = async () => {
+    if (!backendEvent) return;
+    try {
+      const event = await resolveEmergencyEvent(backendEvent.id);
+      setBackendEvent(event);
+      setEventMessage("The backend event is resolved.");
+    } catch {
+      setEventMessage("The backend event could not be resolved.");
+    }
+  };
 
   return (
     <>
@@ -173,15 +256,19 @@ export function Emergency() {
 
               <div>
                 <dt>Location</dt>
-                <dd>Ares Transit 01 · crew habitat</dd>
+                <dd>{astronaut?.missionName ?? "Mission context not selected"} · crew habitat</dd>
               </div>
 
               <div>
                 <dt>Communication</dt>
                 <dd>
-                  {activation === "demo"
-                    ? "Demonstration event created locally"
-                    : "Not activated"}
+                  {eventStatus === "success"
+                    ? `Backend event ${backendEvent?.status ?? "saved"}`
+                    : eventStatus === "failure"
+                      ? "Demonstration event remains local"
+                      : eventStatus === "syncing"
+                        ? "Synchronizing demonstration event"
+                        : "Not activated"}
                 </dd>
               </div>
 
@@ -190,6 +277,28 @@ export function Emergency() {
                 <dd>No emergency signal has been transmitted</dd>
               </div>
             </dl>
+            {backendEvent && eventStatus === "success" && (
+              <div className="form-actions">
+                {backendEvent.status === "OPEN" && (
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => void acknowledgeEvent()}
+                  >
+                    Acknowledge event
+                  </button>
+                )}
+                {backendEvent.status !== "RESOLVED" && (
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => void resolveEvent()}
+                  >
+                    Resolve event
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </Panel>
       </div>
@@ -224,7 +333,7 @@ export function Emergency() {
 
               <button
                 className="danger-btn"
-                onClick={() => setActivation("demo")}
+                onClick={createDemoEvent}
               >
                 Confirm demo event
               </button>
@@ -238,10 +347,16 @@ export function Emergency() {
           <Info size={17} />
 
           <div>
-            <b>Demonstration event created locally</b>
+            <b>
+              {eventStatus === "success"
+                ? "Demonstration event synchronized"
+                : eventStatus === "failure"
+                  ? "Demonstration event remains local"
+                  : "Synchronizing demonstration event"}
+            </b>
             <p>
               No signal was transmitted. Follow authorised mission protocol for
-              a real emergency.
+              a real emergency. {eventMessage}
             </p>
           </div>
 

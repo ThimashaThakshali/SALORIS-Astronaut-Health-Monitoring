@@ -4,17 +4,24 @@ import com.saloris.backend.entity.WellbeingCheckin;
 import com.saloris.backend.repository.AstronautRepository;
 import com.saloris.backend.repository.WellbeingCheckinRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/health/wellbeing")
 @CrossOrigin(origins = "*")
 public class WellbeingController {
+
+    private static final Set<String> ALLOWED_SOURCES = Set.of(
+            "MANUAL", "SIMULATED", "WEARABLE", "MEDICAL_DEVICE", "NASA_DATA");
 
     private final WellbeingCheckinRepository repository;
     private final AstronautRepository astronautRepository;
@@ -36,6 +43,10 @@ public class WellbeingController {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND, "Astronaut not found");
         }
+
+        String idempotencyKey = requireIdempotencyKey(checkin.getIdempotencyKey());
+        checkin.setIdempotencyKey(idempotencyKey);
+        boolean recordedAtProvided = checkin.getRecordedAt() != null;
 
         if (checkin.getSleepHours() == null
                 && checkin.getSleepQuality() == null
@@ -71,10 +82,39 @@ public class WellbeingController {
         if (checkin.getSource() == null || checkin.getSource().isBlank()) {
             checkin.setSource("MANUAL");
         } else {
-            checkin.setSource(checkin.getSource().trim().toUpperCase());
+            checkin.setSource(checkin.getSource().trim().toUpperCase(Locale.ROOT));
         }
 
-        return repository.save(checkin);
+        if (!ALLOWED_SOURCES.contains(checkin.getSource())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported data source: " + checkin.getSource());
+        }
+
+        var existing = repository.findByAstronautIdAndIdempotencyKey(
+                astronautId, idempotencyKey);
+        if (existing.isPresent()) {
+            if (isSameSubmission(checkin, existing.get(), recordedAtProvided)) {
+                return existing.get();
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "This idempotency key was already used for different check-in data");
+        }
+
+        try {
+            return repository.saveAndFlush(checkin);
+        } catch (DataIntegrityViolationException exception) {
+            var duplicate = repository.findByAstronautIdAndIdempotencyKey(
+                    astronautId, idempotencyKey);
+            if (duplicate.isPresent()
+                    && isSameSubmission(checkin, duplicate.get(), recordedAtProvided)) {
+                return duplicate.get();
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Duplicate submission key or database constraint violation");
+        }
     }
 
     @GetMapping("/{astronautId}")
@@ -94,5 +134,30 @@ public class WellbeingController {
                     HttpStatus.BAD_REQUEST,
                     field + " must be between 1 and 5");
         }
+    }
+
+    private String requireIdempotencyKey(String value) {
+        if (value == null || value.isBlank() || value.trim().length() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Idempotency key is required and cannot exceed 100 characters");
+        }
+        return value.trim();
+    }
+
+    private boolean isSameSubmission(
+            WellbeingCheckin incoming,
+            WellbeingCheckin existing,
+            boolean recordedAtProvided) {
+
+        return Objects.equals(incoming.getAstronautId(), existing.getAstronautId())
+                && Objects.equals(incoming.getSleepHours(), existing.getSleepHours())
+                && Objects.equals(incoming.getSleepQuality(), existing.getSleepQuality())
+                && Objects.equals(incoming.getMood(), existing.getMood())
+                && Objects.equals(incoming.getStress(), existing.getStress())
+                && Objects.equals(incoming.getFatigue(), existing.getFatigue())
+                && (!recordedAtProvided
+                    || Objects.equals(incoming.getRecordedAt(), existing.getRecordedAt()))
+                && Objects.equals(incoming.getSource(), existing.getSource());
     }
 }

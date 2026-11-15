@@ -127,6 +127,9 @@
   .analytics-grid {
     grid-template-columns: 1fr;
   }
+  .astronaut-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
   .body-layout {
     grid-template-columns: 0.7fr 1.3fr;
   }
@@ -316,6 +319,9 @@
   .demo-strip {
     align-items: flex-start;
   }
+  .demo-strip span:nth-child(2) {
+    min-width: 0;
+  }
   .demo-strip .demo-badge {
     display: none;
   }
@@ -436,4 +442,3 @@
     transition-duration: 0.01ms !important;
   }
 }
-

@@ -1,4 +1,5 @@
-﻿import {
+import { useEffect, useState } from "react";
+import {
   Activity,
   ArrowRight,
   Bell,
@@ -16,18 +17,110 @@ import { PageHeader } from "../../components/common/PageHeader";
 import { ReadingCard } from "../../components/common/ReadingCard";
 import { TrendChart } from "../../components/common/TrendChart";
 
-import { environmentReadings, healthReadings, radiationRecord } from "../../data";
+import {
+  environmentReadings,
+  healthReadings,
+  radiationRecord,
+  type ReadingMethod,
+} from "../../data";
 import { getLatestHealthCheckIn } from "../../services/storage/localStorage";
+import {
+  acknowledgeAlert,
+  ensureAstronaut,
+  getAlerts,
+  getHealthReadings,
+  type Astronaut,
+  type HealthReadingRecord,
+  type HealthAlert,
+} from "../../services/api/client";
 
 import type { Page } from "../../types/navigation";
 
 interface OverviewProps {
   navigate: (page: Page) => void;
+  astronaut: Astronaut;
+}
+
+type AlertLoadState = "loading" | "loaded" | "unavailable";
+type ReadingLoadState = "loading" | "loaded" | "unavailable";
+
+function mapCollectionMethod(method: string): ReadingMethod {
+  const normalized = method.toUpperCase();
+  if (normalized.includes("WEARABLE")) return "Wearable device";
+  if (normalized.includes("MEDICAL")) return "Medical instrument";
+  if (normalized.includes("NASA")) return "Imported data";
+  if (normalized.includes("SIMULATED")) return "Simulated demonstration data";
+  return "Manual entry";
 }
 
 // Displays the main mission dashboard.
-export function Overview({ navigate }: OverviewProps) {
+export function Overview({ navigate, astronaut }: OverviewProps) {
+  const [backendAlerts, setBackendAlerts] = useState<HealthAlert[]>([]);
+  const [backendReadings, setBackendReadings] = useState<HealthReadingRecord[]>(
+    [],
+  );
+  const [alertLoadState, setAlertLoadState] =
+    useState<AlertLoadState>("loading");
+  const [readingLoadState, setReadingLoadState] =
+    useState<ReadingLoadState>("loading");
+  const [alertActionError, setAlertActionError] = useState("");
   const latestCheckIn = getLatestHealthCheckIn();
+
+  useEffect(() => {
+    let active = true;
+    void ensureAstronaut().then(async (astronaut) => {
+      const results = await Promise.allSettled([
+        getAlerts(astronaut.id),
+        getHealthReadings(astronaut.id),
+      ]);
+
+      if (!active) return;
+
+      const [alertsResult, readingsResult] = results;
+      if (alertsResult.status === "fulfilled") {
+        setBackendAlerts(alertsResult.value);
+        setAlertLoadState("loaded");
+      } else {
+        setBackendAlerts([]);
+        setAlertLoadState("unavailable");
+      }
+
+      if (readingsResult.status === "fulfilled") {
+        setBackendReadings(readingsResult.value);
+        setReadingLoadState("loaded");
+      } else {
+        setBackendReadings([]);
+        setReadingLoadState("unavailable");
+      }
+    }).catch(() => {
+      if (active) {
+        setBackendAlerts([]);
+        setBackendReadings([]);
+        setAlertLoadState("unavailable");
+        setReadingLoadState("unavailable");
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleAcknowledge = async (alertId: string) => {
+    setAlertActionError("");
+    try {
+      await acknowledgeAlert(alertId);
+      setBackendAlerts((alerts) =>
+        alerts.map((alert) =>
+          alert.id === alertId ? { ...alert, acknowledged: true } : alert,
+        ),
+      );
+    } catch {
+      setAlertActionError(
+        "This alert could not be acknowledged. Check the backend connection and try again.",
+      );
+    }
+  };
 
   const latestVitalsCount = latestCheckIn
     ? Object.values(latestCheckIn.vitals).filter((value) => value !== null).length
@@ -42,11 +135,25 @@ export function Overview({ navigate }: OverviewProps) {
     (reading) => reading.freshness !== "Current",
   ).length;
 
+  const latestBackendReadings = Array.from(
+    backendReadings.reduce((latest, reading) => {
+      const previous = latest.get(reading.indicator);
+      if (
+        !previous ||
+        new Date(reading.recordedAt).getTime() >
+          new Date(previous.recordedAt).getTime()
+      ) {
+        latest.set(reading.indicator, reading);
+      }
+      return latest;
+    }, new Map<string, HealthReadingRecord>()),
+  ).map(([, reading]) => reading);
+
   return (
     <>
       <PageHeader
-        eyebrow="Mission day 184 Â· Sol transit phase"
-        title="Good morning, Commander Chen."
+        eyebrow="Mission day 184 · Sol transit phase"
+        title={`Good morning, ${astronaut.callsign}.`}
         description="Review recorded measurements, data quality and pending actions for Ares Transit 01."
         action={
           <button
@@ -70,18 +177,18 @@ export function Overview({ navigate }: OverviewProps) {
 
       <div className="mission-summary">
         <Panel className="astronaut-summary">
-          <div className="profile-avatar">MC</div>
+          <div className="profile-avatar">{astronaut.callsign}</div>
 
-          <div>
+          <div className="astronaut-profile-details">
             <span className="eyebrow">Active crew profile</span>
-            <h2>Commander Maya Chen</h2>
-            <p>Flight crew Â· Ares Transit 01</p>
+            <h2>{astronaut.fullName}</h2>
+            <p>{`Flight crew · ${astronaut.missionName}`}</p>
           </div>
 
           <div className="mission-duration">
             <small>Mission duration</small>
             <strong>184 days</strong>
-            <span>Transit phase Â· 61% complete</span>
+            <span>Transit phase · 61% complete</span>
           </div>
         </Panel>
 
@@ -145,7 +252,7 @@ export function Overview({ navigate }: OverviewProps) {
             <Zap size={17} />
 
             <div>
-              <small>Radiation exposure Â· {radiationRecord.period}</small>
+              <small>Radiation exposure · {radiationRecord.period}</small>
               <b>
                 {radiationRecord.dose} {radiationRecord.unit}
               </b>
@@ -156,7 +263,7 @@ export function Overview({ navigate }: OverviewProps) {
 
           <div className="source-line">
             <Radio size={13} />
-            Simulated environmental dataset Â· not a live sensor feed
+            Simulated environmental dataset · not a live sensor feed
           </div>
         </Panel>
 
@@ -222,11 +329,54 @@ export function Overview({ navigate }: OverviewProps) {
         <DemoBadge />
       </div>
 
-      <div className="readings-grid">
-        {healthReadings.map((reading, index) => (
-          <ReadingCard key={reading.label} reading={reading} index={index} />
-        ))}
-      </div>
+      {readingLoadState === "loaded" && latestBackendReadings.length > 0 ? (
+        <div className="readings-grid">
+          {latestBackendReadings.map((reading, index) => {
+            const isStale =
+              Date.now() - new Date(reading.recordedAt).getTime() >
+              24 * 60 * 60 * 1000;
+            return (
+              <ReadingCard
+                key={reading.id}
+                index={index}
+                reading={{
+                  label: reading.indicator.replaceAll("_", " "),
+                  value: String(reading.value),
+                  unit: reading.unit,
+                  status: "Insufficient data",
+                  source: reading.source,
+                  method: mapCollectionMethod(reading.collectionMethod),
+                  timestamp: new Date(reading.recordedAt).toLocaleString(),
+                  freshness: isStale ? "Outdated" : "Current",
+                  simulated: reading.source === "SIMULATED",
+                  icon: "heart",
+                }}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          {readingLoadState === "unavailable" && (
+            <div className="demo-strip">
+              <Info size={15} />
+              <span>
+                Backend readings are unavailable. The health snapshot below is
+                simulated demonstration data, not a backend record.
+              </span>
+              <DemoBadge />
+            </div>
+          )}
+          {readingLoadState === "loading" && (
+            <p className="form-help">Loading backend readings...</p>
+          )}
+          <div className="readings-grid">
+            {healthReadings.map((reading, index) => (
+              <ReadingCard key={reading.label} reading={reading} index={index} />
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="dashboard-lower">
         <Panel>
@@ -247,7 +397,7 @@ export function Overview({ navigate }: OverviewProps) {
             <span>
               <i className="cyan-dot" /> Heart rate
             </span>
-            <span>Historical simulated series Â· bpm</span>
+            <span>Historical simulated series · bpm</span>
           </div>
         </Panel>
 
@@ -260,29 +410,77 @@ export function Overview({ navigate }: OverviewProps) {
             <Bell size={19} />
           </div>
 
-          <div className="alert-item warning">
-            <Moon />
-            <div>
-              <b>Sleep consistency</b>
-              <p>
-                Triggered by two simulated sleep entries below the crew's
-                planned duration.
-              </p>
-              <small>Attention Â· latest source entry Today, 07:20</small>
-            </div>
-          </div>
+          {alertLoadState === "loading" ? (
+            <p className="form-help">Loading backend alerts...</p>
+          ) : alertLoadState === "unavailable" ? (
+            <>
+              <div className="alert-item">
+                <Info />
+                <div>
+                  <b>Backend alerts unavailable</b>
+                  <p>
+                    The following examples are simulated dashboard information,
+                    not records from the Java backend.
+                  </p>
+                </div>
+              </div>
+              <div className="alert-item warning">
+                <Moon />
+                <div>
+                  <b>Simulated example: sleep consistency</b>
+                  <p>
+                    Triggered by two simulated sleep entries below the crew's
+                    planned duration.
+                  </p>
+                  <small>Demonstration data only</small>
+                </div>
+              </div>
+              <div className="alert-item">
+                <Check />
+                <div>
+                  <b>Simulated example: oxygen saturation outdated</b>
+                  <p>
+                    No verified measurement source is connected. Record with an
+                    approved instrument if requested.
+                  </p>
+                  <small>Demonstration data only</small>
+                </div>
+              </div>
+            </>
+          ) : backendAlerts.length > 0
+            ? backendAlerts.map((alert) => (
+                <div
+                  className={`alert-item ${
+                    alert.severity.toLowerCase() === "warning" ? "warning" : ""
+                  }`}
+                  key={alert.id}
+                >
+                  <Bell />
+                  <div>
+                    <b>{alert.severity}</b>
+                    <p>{alert.message}</p>
+                    <small>
+                      {alert.acknowledged ? "Acknowledged" : "Needs acknowledgement"}
+                    </small>
+                    {!alert.acknowledged && (
+                      <button
+                        type="button"
+                        className="secondary-btn"
+                        onClick={() => void handleAcknowledge(alert.id)}
+                      >
+                        Acknowledge
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            : <p className="form-help">No backend alerts are recorded.</p>}
 
-          <div className="alert-item">
-            <Check />
-            <div>
-              <b>Oxygen saturation is outdated</b>
-              <p>
-                No verified measurement source is connected. Record with an
-                approved instrument if requested.
-              </p>
-              <small>Insufficient data Â· sample timestamp Today, 08:41</small>
-            </div>
-          </div>
+          {alertActionError && (
+            <p className="field-error" role="alert">
+              {alertActionError}
+            </p>
+          )}
 
           <button
             className="secondary-btn wide"
@@ -296,4 +494,3 @@ export function Overview({ navigate }: OverviewProps) {
     </>
   );
 }
-

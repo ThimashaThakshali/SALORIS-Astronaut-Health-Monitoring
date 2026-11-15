@@ -344,6 +344,12 @@ nav button span {
   align-items: center;
   gap: 10px;
   padding: 14px 5px 2px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 .profile > span {
   width: 31px;
@@ -380,6 +386,54 @@ nav button span {
   width: calc(100% - 248px);
   position: relative;
   z-index: 1;
+}
+.profile-setup {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--app-bg, #07131d);
+  color: var(--text-primary, #eef7f7);
+}
+.profile-setup-card {
+  width: min(100%, 520px);
+  display: grid;
+  gap: 14px;
+  padding: 32px;
+  border: 1px solid var(--border, #234052);
+  border-radius: 18px;
+  background: var(--surface, #102330);
+}
+.profile-setup-card form {
+  display: grid;
+  gap: 10px;
+}
+.profile-setup-card input {
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #234052);
+  border-radius: 8px;
+  background: var(--input-bg, #0b1c28);
+  color: inherit;
+}
+.profile-options {
+  display: grid;
+  gap: 8px;
+}
+.profile-options button {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid var(--border, #234052);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.profile-options span {
+  color: var(--text-muted, #8ca4ad);
+  font-size: 12px;
 }
 .saloris-loader {
   position: fixed;
@@ -617,6 +671,8 @@ main {
 }
 .demo-strip span:nth-child(2) {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .panel {
   background: linear-gradient(145deg, rgba(16, 36, 51, 0.97), rgba(11, 27, 41, 0.98));
@@ -852,11 +908,23 @@ main {
   gap: 14px;
   margin-bottom: 14px;
 }
+.mission-summary > .panel,
+.overview-grid > .panel,
+.dashboard-lower > .panel {
+  min-width: 0;
+}
 .astronaut-summary {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 16px;
+}
+.astronaut-profile-details {
+  min-width: 0;
+}
+.astronaut-profile-details h2,
+.astronaut-profile-details p {
+  overflow-wrap: anywhere;
 }
 .profile-avatar {
   width: 54px;
@@ -1271,20 +1339,21 @@ main {
 .choice-row,
 .scale {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 .choice-row button,
 .scale button {
   flex: 1;
-  padding: 8px 4px;
+  min-height: 42px;
+  padding: 9px 6px;
   border: 1px solid #29475a;
   border-radius: 6px;
   background: #0a1b29;
   color: #879dac;
-  font-size: 9px;
+  font-size: 12px;
 }
 .scale button {
-  height: 40px;
+  height: 42px;
 }
 .form-card input[type="range"] {
   width: 100%;
@@ -1391,5 +1460,3 @@ main {
   font-size: 11px;
   line-height: 1.45;
 }
-
-
