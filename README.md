@@ -106,7 +106,7 @@ SALORIS/
 
 ### Requirements
 - Node.js and Corepack
-- Java 21
+- Java 25
 - PostgreSQL
 - Python
 
